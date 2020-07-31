@@ -19,7 +19,7 @@
 #include <sofa/helper/system/FileSystem.h>
 #include <fstream>
 
-
+#include <QtGui/private/qshader_p.h>
 #if QT_CONFIG(opengl)
 # include <QOpenGLContext>
 # include <QtGui/private/qrhigles2_p.h>
@@ -186,29 +186,58 @@ void RHIViewer::setupDefaultCamera()
 
 void RHIViewer::setupMeshes()
 {
-    QScopedPointer<QRhiShaderResourceBindings> srb(m_rhi->newShaderResourceBindings());
-    if (!srb->build())
+    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+
+    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
+    m_ubuf = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
+    if (!m_ubuf->build())
+        msg_warning("RHIViewer") << "Problem while building u buffer";
+    // rotation by 45 degrees around the Z axis
+    QMatrix4x4 matrix;
+    matrix.rotate(45, 0, 0, 1);
+    //matrix.setToIdentity();
+    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, matrix.constData());
+
+    m_srb = m_rhi->newShaderResourceBindings();
+    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+    m_srb->setBindings({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_ubuf, 0, UNIFORM_BLOCK_SIZE),
+        });
+    if (!m_srb->build())
         msg_warning("RHIViewer") << "Problem while building srb";
 
     m_pipeline = (m_rhi->newGraphicsPipeline());
-    QShader vs = loadShader(":/shaders/gl/simple.vert.qsb");
+
+    //Vertex Shader
+    QShader vs = loadShader(":/shaders/gl/simple_matrix.vert.qsb");
     if (!vs.isValid())
         msg_warning("RHIViewer") << "Problem while vs shader";
+    QShaderDescription shaderDesc = vs.description();
+    if (shaderDesc.uniformBlocks().isEmpty())
+        msg_warning("RHIViewer") << "Problem with uniformBlocks of vs shader";
+    if(shaderDesc.uniformBlocks().first().size !=  UNIFORM_BLOCK_SIZE)
+        msg_warning("RHIViewer") << "Problem with size of uniformBlocks of vs shader";
+
+    //Fragment Shader
     QShader fs = loadShader(":/shaders/gl/simple.frag.qsb");
     if (!fs.isValid())
         msg_warning("RHIViewer") << "Problem while fs shader";
+    //shaderDesc = fs.description();
+    //if (shaderDesc.uniformBlocks().isEmpty())
+    //    msg_warning("RHIViewer") << "Problem with uniformBlocks of fs shader";
+    //if (shaderDesc.uniformBlocks().first().size != UNIFORM_BLOCK_SIZE)
+    //    msg_warning("RHIViewer") << "Problem with size of uniformBlocks of fs shader";
+
     m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
     QRhiVertexInputLayout inputLayout;
     inputLayout.setBindings({ { 2 * sizeof(float) } });
     inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float2, 0 } });
     m_pipeline->setVertexInputLayout(inputLayout);
-    m_pipeline->setShaderResourceBindings(srb.data());
+    m_pipeline->setShaderResourceBindings(m_srb);
     m_pipeline->setRenderPassDescriptor(m_rpDesc);
     m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
     if (!m_pipeline->build())
         msg_warning("RHIViewer") << "Problem while building pipeline";
-
-    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
 
     static const float vertices[] = {
         -1.0f, -1.0f,
@@ -219,7 +248,6 @@ void RHIViewer::setupMeshes()
     m_vbuf = m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(vertices));
     if (!m_vbuf->build())
         msg_warning("RHIViewer") << "Problem while building buffer";
-
     updates->uploadStaticBuffer(m_vbuf, vertices);
 
     const int framesInFlight = m_rhi->resourceLimit(QRhi::FramesInFlight);
@@ -239,6 +267,7 @@ void RHIViewer::setupMeshes()
         cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
         updates = nullptr;
         cb->setGraphicsPipeline(m_pipeline);
+        cb->setShaderResources(); // seems to send data cpu -> gpu ?
         cb->setViewport(viewport);
         QRhiCommandBuffer::VertexInput vbindings(m_vbuf, 0);
         cb->setVertexInput(0, 1, &vbindings);

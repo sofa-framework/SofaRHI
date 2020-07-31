@@ -77,7 +77,7 @@ void RHIModel::initVertexBuffer()
     //m_positionAttribute = new Qt3DRender::QAttribute();
     //m_positionAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
     //m_positionAttribute->setBuffer(m_vertexPositionBuffer);
-    //m_positionAttribute->setVertexBaseType(VertexType);
+    //m_positionAttribute->setVertexBaseType(VertexType);FF
     //m_positionAttribute->setVertexSize(3);
     //m_positionAttribute->setByteOffset(0);
     //m_positionAttribute->setByteStride(0);

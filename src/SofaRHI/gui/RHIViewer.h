@@ -143,6 +143,8 @@ private:
     QRhiRenderPassDescriptor* m_rpDesc;
     QRhiGraphicsPipeline* m_pipeline;
     QRhiBuffer* m_vbuf;
+    QRhiBuffer* m_ubuf;
+    QRhiShaderResourceBindings* m_srb;
 
     QWindow* m_window;
     QWidget* m_container;
