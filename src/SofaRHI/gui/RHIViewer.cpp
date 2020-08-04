@@ -192,11 +192,9 @@ void RHIViewer::setupMeshes()
     m_ubuf = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
     if (!m_ubuf->build())
         msg_warning("RHIViewer") << "Problem while building u buffer";
-    // rotation by 45 degrees around the Z axis
-    QMatrix4x4 matrix;
-    matrix.rotate(45, 0, 0, 1);
-    //matrix.setToIdentity();
-    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, matrix.constData());
+
+    m_transformMatrix.setToIdentity();
+    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, m_transformMatrix.constData());
 
     m_srb = m_rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
@@ -1022,11 +1020,17 @@ void RHIViewer::drawScene(void)
     QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
     QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
     QSize outputSize = m_swapChain->currentPixelSize();
+    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
 
     QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));
 
-    cb->beginPass(rt, Qt::green, { 1.0f, 0 }, nullptr);
+    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
+    m_transformMatrix.rotate(1, 0, 0, 1); // turn one degree more
+    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, m_transformMatrix.constData());
+
+    cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
     cb->setGraphicsPipeline(m_pipeline);
+    cb->setShaderResources();
     cb->setViewport(viewport);
     QRhiCommandBuffer::VertexInput vbindings(m_vbuf, 0);
     cb->setVertexInput(0, 1, &vbindings);

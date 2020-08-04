@@ -153,6 +153,7 @@ private:
     QSize m_logoSize;
     float m_lookSpeed;
     float m_linearSpeed;
+    QMatrix4x4 m_transformMatrix;
 
 protected:
     void cleanupRHI();
