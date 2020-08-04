@@ -153,9 +153,12 @@ private:
     QSize m_logoSize;
     float m_lookSpeed;
     float m_linearSpeed;
-    QMatrix4x4 m_transformMatrix;
+    QMatrix4x4 m_projectionMatrix;
+    QMatrix4x4 m_modelviewMatrix;
 
 protected:
+    friend class InteractionEventManager;
+
     void cleanupRHI();
     void keyPressEvent ( QKeyEvent * e ) override;
     void keyReleaseEvent ( QKeyEvent * e ) override;
@@ -175,6 +178,21 @@ public slots:
     void updateVisualParameters();
 
     friend class RHIBackend;
+};
+
+class InteractionEventManager : public QObject
+{
+    Q_OBJECT
+
+public:
+    InteractionEventManager(RHIViewer* parent)
+        : QObject(parent)
+        , m_viewer(parent)
+    {}
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
+    RHIViewer* m_viewer;
 };
 
 

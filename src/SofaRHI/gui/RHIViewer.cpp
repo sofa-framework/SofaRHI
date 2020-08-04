@@ -136,6 +136,10 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 
     connect( &captureTimer, SIGNAL(timeout()), this, SLOT(captureEvent()) );
 
+    //the view grabs events and does not give it back so we need to install an eventfilter
+    InteractionEventManager* eventManager = new  InteractionEventManager(this);
+    m_window->installEventFilter(eventManager);
+
     m_bFirst = true;
 	
     setBackgroundImage();
@@ -193,8 +197,9 @@ void RHIViewer::setupMeshes()
     if (!m_ubuf->build())
         msg_warning("RHIViewer") << "Problem while building u buffer";
 
-    m_transformMatrix.setToIdentity();
-    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, m_transformMatrix.constData());
+    QMatrix4x4 idMatrix;
+    idMatrix.setToIdentity();
+    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, idMatrix.constData());
 
     m_srb = m_rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
@@ -228,8 +233,8 @@ void RHIViewer::setupMeshes()
 
     m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
     QRhiVertexInputLayout inputLayout;
-    inputLayout.setBindings({ { 2 * sizeof(float) } });
-    inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float2, 0 } });
+    inputLayout.setBindings({ { 3 * sizeof(float) } });
+    inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float3, 0 } });
     m_pipeline->setVertexInputLayout(inputLayout);
     m_pipeline->setShaderResourceBindings(m_srb);
     m_pipeline->setRenderPassDescriptor(m_rpDesc);
@@ -238,9 +243,9 @@ void RHIViewer::setupMeshes()
         msg_warning("RHIViewer") << "Problem while building pipeline";
 
     static const float vertices[] = {
-        -1.0f, -1.0f,
-        1.0f, -1.0f,
-        0.0f, 1.0f
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
     };
     
     m_vbuf = m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(vertices));
@@ -260,7 +265,7 @@ void RHIViewer::setupMeshes()
         QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
         const QSize outputSize = m_swapChain->currentPixelSize();
 
-        QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));
+        QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.001f, 10.0f);
 
         cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
         updates = nullptr;
@@ -690,7 +695,7 @@ void RHIViewer::keyReleaseEvent(QKeyEvent * e)
 
 void RHIViewer::wheelEvent(QWheelEvent* e)
 {
-//    std::cerr<<"RHIViewer::wheelEvent"<<std::endl;
+    //std::cerr<<"RHIViewer::wheelEvent"<<std::endl;
     SofaViewer::wheelEvent(e);
 }
 
@@ -774,42 +779,13 @@ void RHIViewer::resetView()
     if (!sceneFileName.empty())
     {
         std::string viewFileName = sceneFileName + "." + VIEW_FILE_EXTENSION;
-
-        if(sofa::helper::system::FileSystem::exists(viewFileName))
-        {
-            std::ifstream in(viewFileName);
-
-            if (!in.fail())
-            {
-                Vector3 pos;
-                in >> pos[0];
-                in >> pos[1];
-                in >> pos[2];
-
-                Vector3 upVector;
-                in >> upVector[0];
-                in >> upVector[1];
-                in >> upVector[2];
-
-                Vector3 viewCenter;
-                in >> viewCenter[0];
-                in >> viewCenter[1];
-                in >> viewCenter[2];
-
-                in.close();
-
-                fileRead = true;
-
-                setViewFromViewCenter(pos, upVector, viewCenter);
-            }
-        }
+        fileRead = currentCamera->importParametersFromFile(viewFileName);
     }
 
     //if there is no .view file , look at the center of the scene bounding box
     // and with a Up vector in the same axis as the gravity
     if (!fileRead)
     {
-        msg_warning("RHIViewer") << "No valid view file, set default view";
         newView();
     }
 
@@ -872,22 +848,14 @@ void RHIViewer::setView(const Vector3& pos, const Quat &ori)
 
 void RHIViewer::saveView()
 {
-    //if (!sceneFileName.empty())
-    //{
-    //    std::string viewFileName = sceneFileName + "." + VIEW_FILE_EXTENSION;
-    //    std::ofstream out(viewFileName.c_str());
-    //    if (!out.fail())
-    //    {
-    //        const QVector3D& position = m_defaultCamera->position();
-    //        const QVector3D& upVector = m_defaultCamera->upVector();
-    //        const QVector3D& viewCenter = m_defaultCamera->viewCenter();
-    //        out << position[0] << " " << position[1] << " " << position[2] << "\n";
-    //        out << upVector[0] << " " << upVector[1] << " " << upVector[2] << "\n";
-    //        out << viewCenter[0] << " " << viewCenter[1] << " " << viewCenter[2] << "\n";
-    //        out.close();
-    //    }
-    //    std::cout << "View parameters saved in "<<viewFileName<<std::endl;
-    //}
+    if (!sceneFileName.empty())
+    {
+        std::string viewFileName = sceneFileName + "." + VIEW_FILE_EXTENSION;
+        if (currentCamera->exportParametersInFile(viewFileName))
+            std::cout << "View parameters saved in " << viewFileName << std::endl;
+        else
+            std::cout << "Error while saving view parameters in " << viewFileName << std::endl;
+    }
 }
 
 void RHIViewer::setSizeW(int size)
@@ -980,7 +948,7 @@ void RHIViewer::paintEvent ( QPaintEvent * /*event*/ )
         setupMeshes();
         //drawScene();
 
-        //resetView();
+        resetView();
         m_bFirst = false;
     }
     else
@@ -1000,16 +968,24 @@ void RHIViewer::updateVisualParameters()
 	if (!groot)
 		return;
 
+    //TODO: compute znear zfar
+    m_vparams->zNear() = 0.001;
+    m_vparams->zFar() = 1000;
     //m_vparams->zNear() = m_defaultCamera->nearPlane();
     //m_vparams->zFar() = m_defaultCamera->farPlane();
-    //sofa::core::visual::VisualParams::Viewport vp{0, 0, m_container->width(), m_container->height() };
-    //m_vparams->viewport() = vp;
-    //const QMatrix4x4& qProjectionMatrix = m_defaultCamera->projectionMatrix();
-    //double projectionMatrix[16];
-    //for(int i=0 ; i<16 ; i++)
-    //    projectionMatrix[i] = qProjectionMatrix.data()[i];
-    //m_vparams->setProjectionMatrix(projectionMatrix);
-    //m_vparams->sceneBBox() = groot->f_bbox.getValue();
+
+    sofa::core::visual::VisualParams::Viewport vp{0, 0, m_container->width(), m_container->height() };
+    m_vparams->viewport() = vp;
+    double projectionMatrix[16];
+    double modelviewMatrix[16];
+
+    currentCamera->getProjectionMatrix(projectionMatrix);
+    currentCamera->getModelViewMatrix(modelviewMatrix);
+
+    m_vparams->setProjectionMatrix(projectionMatrix);
+    m_vparams->setModelViewMatrix(modelviewMatrix);
+
+    m_vparams->sceneBBox() = groot->f_bbox.getValue();
 }
 
 void RHIViewer::drawScene(void)
@@ -1022,11 +998,36 @@ void RHIViewer::drawScene(void)
     QSize outputSize = m_swapChain->currentPixelSize();
     QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
 
-    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));
+    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.0f, 10.0f);
+    viewport.setMinDepth(0.001f);
+    viewport.setMinDepth(10.0f);
 
     const int UNIFORM_BLOCK_SIZE = 64; // matrix 
-    m_transformMatrix.rotate(1, 0, 0, 1); // turn one degree more
-    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, m_transformMatrix.constData());
+
+    QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
+    double projectionMatrix[16];
+    double modelviewMatrix[16];
+
+    currentCamera->getProjectionMatrix(projectionMatrix);
+    currentCamera->getModelViewMatrix(modelviewMatrix);
+    for (auto i = 0; i < 16; i++)
+    {
+        qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
+        qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
+    }
+    //qModelViewMatrix.setToIdentity();
+    //qModelViewMatrix.scale(0.5f);
+    //qModelViewMatrix.translate({ -0.4f,0.0f, -0.0f });
+
+    QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+
+    //qDebug() << qProjectionMatrix;
+    //qDebug() << qModelViewMatrix;
+    //qDebug() << projmodelviewMatrix;
+    //projmodelviewMatrix.setToIdentity();
+    //projmodelviewMatrix.rotate(45, 0, 0, 1);
+    //qDebug() << projmodelviewMatrix;
+    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
 
     cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
     cb->setGraphicsPipeline(m_pipeline);
@@ -1122,6 +1123,53 @@ void RHIViewer::setBackgroundImage(std::string imageFileName)
 
 }
 
+
+bool InteractionEventManager::eventFilter(QObject* obj, QEvent* event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        //        qDebug("Ate key press %d", keyEvent->key());
+        m_viewer->keyPressEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::KeyRelease)
+    {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        m_viewer->keyReleaseEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::MouseButtonPress)
+    {
+        QMouseEvent* keyEvent = static_cast<QMouseEvent*>(event);
+        //        qDebug("Ate mouse press %d");
+        m_viewer->mousePressEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::MouseButtonRelease)
+    {
+        QMouseEvent* keyEvent = static_cast<QMouseEvent*>(event);
+        m_viewer->mouseReleaseEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::Wheel)
+    {
+        QWheelEvent* keyEvent = static_cast<QWheelEvent*>(event);
+        m_viewer->wheelEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::MouseMove)
+    {
+        QMouseEvent* keyEvent = static_cast<QMouseEvent*>(event);
+        m_viewer->mouseMoveEvent(keyEvent);
+        return true;
+    }
+    else
+    {
+        // standard event processing
+        return QObject::eventFilter(obj, event);
+    }
+}
 
 helper::SofaViewerCreator< RHIViewer> RHIViewer_class("rhi",false);
 

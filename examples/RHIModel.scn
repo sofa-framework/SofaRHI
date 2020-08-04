@@ -1,6 +1,10 @@
-<Node name="root" gravity="0 0 0" dt="0.04">
+<Node name="root" gravity="0 0 0" dt="0.04" >
     <RequiredPlugin pluginName="SofaRHI" />
 
-    <AddResourceRepository path="."/>
+    <AddDataRepository path="."/>
 
+	<MeshObjLoader name='myLoader' filename='data/triangle.obj'/>
+    <VisualModel src="@myLoader" />
+
+    <InteractiveCamera />
 </Node>
