@@ -7,6 +7,8 @@
 #include <array>
 #include <stack>
 
+#include <QtGui/private/qrhi_p.h>
+
 namespace sofa::core::visual
 {
 
@@ -17,8 +19,10 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
 
     using Vec4i = sofa::defaulttype::Vec4i;
 
+    using QRhiPtr = std::shared_ptr<QRhi>;
+    
 public:
-    DrawToolRHI();
+    DrawToolRHI(QRhiPtr rhi);
     virtual ~DrawToolRHI() override {}
 
     /// @name Primitive rendering methods
@@ -187,6 +191,9 @@ public:
     virtual void init() override;
     virtual void clear() override;
 
+    // RHI specific
+    virtual QRhiPtr getRHI() { return m_rhi; };
+
 private:
 
     static inline Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
@@ -200,6 +207,7 @@ private:
     void internalDrawTetrahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
     void internalDrawHexahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
 
+    QRhiPtr m_rhi;
 };
 
 } // namespace sofa::core::visual

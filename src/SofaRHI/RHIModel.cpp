@@ -6,6 +6,7 @@
 #include <sofa/core/ObjectFactory.h>
 
 #include <sofa/helper/system/FileRepository.h>
+#include <SofaRHI/DrawToolRHI.h>
 
 namespace sofa::rhi
 {
@@ -20,9 +21,6 @@ RHIModel::RHIModel()
     , m_bTopologyHasChanged(false)
     , m_vertexPositionBuffer(nullptr)
     , m_indexTriangleBuffer(nullptr)
-    , m_indexQuadBuffer(nullptr)
-    , m_indexEdgeBuffer(nullptr)
-    , m_indexWireframeBuffer(nullptr)
 {
 }
 
@@ -38,230 +36,11 @@ void RHIModel::updateVisual()
 
 }
 
-
-void RHIModel::createVertexBuffer()
-{
-    //m_vertexPositionBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    //m_vertexNormalBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    //m_vertexTexcoordBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    initVertexBuffer();
-
-}
-
-void RHIModel::createEdgesIndicesBuffer()
-{
-    //m_indexEdgeBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    updateEdgesIndicesBuffer();
-}
-
-void RHIModel::createTrianglesIndicesBuffer()
-{
-    //m_indexTriangleBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    updateTrianglesIndicesBuffer();
-}
-
-
-void RHIModel::createQuadsIndicesBuffer()
-{
-    //m_indexQuadBuffer = new Qt3DRender::QBuffer(getRootEntity());
-    updateQuadsIndicesBuffer();
-}
-
-void RHIModel::initVertexBuffer()
-{
-    const VecCoord& vertices = this->getVertices();
-    const VecDeriv& vnormals = this->getVnormals();
-    const VecTexCoord& vtexcoords = this->getVtexcoords();
-    updateVertexBuffer();
-
-    //m_positionAttribute = new Qt3DRender::QAttribute();
-    //m_positionAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
-    //m_positionAttribute->setBuffer(m_vertexPositionBuffer);
-    //m_positionAttribute->setVertexBaseType(VertexType);FF
-    //m_positionAttribute->setVertexSize(3);
-    //m_positionAttribute->setByteOffset(0);
-    //m_positionAttribute->setByteStride(0);
-    //m_positionAttribute->setCount(vertices.size());
-    //m_positionAttribute->setName(Qt3DRender::QAttribute::defaultPositionAttributeName());
-
-    //m_normalAttribute = new Qt3DRender::QAttribute();
-    //m_normalAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
-    //m_normalAttribute->setBuffer(m_vertexNormalBuffer);
-    //m_normalAttribute->setVertexBaseType(NormalType);
-    //m_normalAttribute->setVertexSize(3);
-    //m_normalAttribute->setByteOffset(0);
-    //m_normalAttribute->setByteStride(0);
-    //m_normalAttribute->setCount(vnormals.size());
-    //m_normalAttribute->setName(Qt3DRender::QAttribute::defaultNormalAttributeName());
-
-    //m_texcoordAttribute = new Qt3DRender::QAttribute();
-    //m_texcoordAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
-    //m_texcoordAttribute->setBuffer(m_vertexTexcoordBuffer);
-    //m_texcoordAttribute->setVertexBaseType(Qt3DRender::QAttribute::Float);
-    //m_texcoordAttribute->setVertexSize(2);
-    //m_texcoordAttribute->setByteOffset(0);
-    //m_texcoordAttribute->setByteStride(0);
-    //m_texcoordAttribute->setCount(vtexcoords.size());
-    //m_texcoordAttribute->setName(Qt3DRender::QAttribute::defaultTextureCoordinateAttributeName());
-}
-
-void RHIModel::updateVertexBuffer()
-{
-    //const VecCoord& vertices = this->getVertices();
-    //const VecDeriv& vnormals = this->getVnormals();
-    //const VecTexCoord& vtexcoords = this->getVtexcoords();
-
-    //unsigned positionsBufferSize, normalsBufferSize;
-    //unsigned textureCoordsBufferSize = 0;
-
-    //positionsBufferSize = (vertices.size() * sizeof(vertices[0]));
-    //normalsBufferSize = (vnormals.size() * sizeof(vnormals[0]));
-    //textureCoordsBufferSize = (vtexcoords.size() * sizeof(vtexcoords[0]));
-
-    ////convert vertices to float if needed
-    //const char* ptrVertices = reinterpret_cast<const char*>(vertices.data());
-    //helper::vector<sofa::defaulttype::Vec3f> fVertices;
-    //if(std::is_same<DataTypes::Real, float>::value == false)
-    //{
-    //    for(const auto& v : vertices)
-    //    {
-    //        fVertices.push_back(sofa::defaulttype::Vec3f(v[0],v[1],v[2]));
-    //    }
-    //    ptrVertices = reinterpret_cast<const char*>(fVertices.data());
-    //    positionsBufferSize = (vertices.size() * sizeof(fVertices[0]));
-    //}
-
-    ////convert normals to float if needed
-    //const char* ptrNormals = reinterpret_cast<const char*>(vnormals.data());
-    //helper::vector<sofa::defaulttype::Vec3f> fNormals;
-    //if(std::is_same<DataTypes::Real, float>::value == false)
-    //{
-    //    for(const auto& n : vnormals)
-    //    {
-    //        fNormals.push_back(sofa::defaulttype::Vec3f(n[0],n[1],n[2]));
-    //    }
-    //    ptrNormals = reinterpret_cast<const char*>(fNormals.data());
-    //    normalsBufferSize = (vnormals.size() * sizeof(fNormals[0]));
-    //}
-
-    //QByteArray qbaPosition(ptrVertices, positionsBufferSize);
-    //m_vertexPositionBuffer->setData(qbaPosition);
-    //QByteArray qbaNormal(ptrNormals, normalsBufferSize);
-    //m_vertexNormalBuffer->setData(qbaNormal);
-    //QByteArray qbaTexcoord(reinterpret_cast<const char*>(vtexcoords.data()), textureCoordsBufferSize);
-    //m_vertexTexcoordBuffer->setData(qbaTexcoord);
-
-}
-
-void RHIModel::updateEdgesIndicesBuffer()
-{
-    const VecEdge& edges = this->getEdges();
-    //QByteArray qbaEdges(reinterpret_cast<const char*>(edges.data()), edges.size() * 2 * sizeof(unsigned int));
-    //m_indexEdgeBuffer->setData(qbaEdges);
-}
-
-void RHIModel::updateTrianglesIndicesBuffer()
-{
-    const VecTriangle& triangles = this->getTriangles();
-    //QByteArray qbaTriangles(reinterpret_cast<const char*>(triangles.data()), triangles.size() * 3 * sizeof(unsigned int));
-    //m_indexTriangleBuffer->setData(qbaTriangles);
-}
-
-void RHIModel::updateQuadsIndicesBuffer()
-{
-    const VecQuad& quads = this->getQuads();
-    //convert to triangles
-    VecTriangle quadTriangles;
-    for (const Quad& q : quads)
-    {
-        quadTriangles.push_back(Triangle(q[0], q[1], q[2]));
-        quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
-    }
-
-    //QByteArray qbaQuads(reinterpret_cast<const char*>(quadTriangles.data()), quadTriangles.size() * 3 * sizeof(unsigned int));
-    //m_indexQuadBuffer->setData(qbaQuads);
-}
-
 void RHIModel::updateBuffers()
 {
     if(!ready())
         return;
-
-    const VecEdge& edges = this->getEdges();
-    const VecTriangle& triangles = this->getTriangles();
-    const VecQuad& quads = this->getQuads();
-    const VecCoord& vertices = this->getVertices();
-    const VecDeriv& normals = this->getVnormals();
-    const VecTexCoord& texCoords = this->getVtexcoords();
-    const VecCoord& tangents = this->getVtangents();
-    const VecCoord& bitangents = this->getVbitangents();
-    bool topologyHasChanged = false;
-
-    if (!m_vertexPositionBuffer)
-    {
-        createVertexBuffer();
-    }
-    else
-    {
-        updateVertexBuffer();
-    }
-
-    //Indices
-    //Edges
-    if (m_indexEdgeBuffer != nullptr)
-    {
-        // will just detect if the size change
-        if (m_oldEdgeSize != edges.size())
-        {
-            updateEdgesIndicesBuffer();
-        }
-    }
-    else if (edges.size() > 0)
-    {
-        createEdgesIndicesBuffer();
-    }
-
-    //Triangles
-    if (m_indexTriangleBuffer != nullptr)
-    {
-        if (m_oldTriangleSize != triangles.size())
-        {
-            updateTrianglesIndicesBuffer();
-        }
-    }
-    else if (triangles.size() > 0)
-    {
-        createTrianglesIndicesBuffer();
-    }
-
-    //Quads
-    if (m_indexQuadBuffer != nullptr)
-    {
-        if (m_oldQuadSize != quads.size())
-        {
-            updateQuadsIndicesBuffer();
-        }
-    }
-    else if (quads.size() > 0)
-    {
-        createQuadsIndicesBuffer();
-    }
-
-    m_oldPositionSize = vertices.size();
-    m_oldNormalSize = normals.size();
-    m_oldEdgeSize = edges.size();
-    m_oldTriangleSize = triangles.size();
-    m_oldQuadSize = quads.size();
-
-    if(m_bTopologyHasChanged)
-    {
-        //m_positionAttribute->setCount(vertices.size());
-        //m_normalAttribute->setCount(normals.size());
-        //m_texcoordAttribute->setCount(texCoords.size());
-
-
-        m_bTopologyHasChanged = false;
-    }
+    // ?
 }
 
 
@@ -305,6 +84,180 @@ void RHIModel::handleTopologyChange()
 
     updateBuffers();
 
+}
+
+void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
+{
+    const VecCoord& vertices = this->getVertices();
+    const VecDeriv& vnormals = this->getVnormals();
+    const VecTexCoord& vtexcoords = this->getVtexcoords();
+
+    size_t positionsBufferSize, normalsBufferSize;
+    size_t textureCoordsBufferSize = 0;
+
+    positionsBufferSize = (vertices.size() * sizeof(vertices[0]));
+    normalsBufferSize = (vnormals.size() * sizeof(vnormals[0]));
+    textureCoordsBufferSize = (vtexcoords.size() * sizeof(vtexcoords[0]));
+
+    //TODO: Check finally if double or float has an impact on rendering
+    //convert vertices to float if needed
+    const void* ptrVertices = reinterpret_cast<const void*>(vertices.data());
+    helper::vector<sofa::defaulttype::Vec3f> fVertices;
+    if (std::is_same<DataTypes::Real, float>::value == false)
+    {
+        for (const auto& v : vertices)
+        {
+            fVertices.push_back(sofa::defaulttype::Vec3f(v[0], v[1], v[2]));
+        }
+        ptrVertices = reinterpret_cast<const void*>(fVertices.data());
+        positionsBufferSize = (vertices.size() * sizeof(fVertices[0]));
+    }
+
+    //convert normals to float if needed
+    const void* ptrNormals = reinterpret_cast<const void*>(vnormals.data());
+    helper::vector<sofa::defaulttype::Vec3f> fNormals;
+    if (std::is_same<DataTypes::Real, float>::value == false)
+    {
+        for (const auto& n : vnormals)
+        {
+            fNormals.push_back(sofa::defaulttype::Vec3f(n[0], n[1], n[2]));
+        }
+        ptrNormals = reinterpret_cast<const void*>(fNormals.data());
+        normalsBufferSize = (vnormals.size() * sizeof(fNormals[0]));
+    }
+
+    m_vertexPositionBuffer->setSize(positionsBufferSize + normalsBufferSize + textureCoordsBufferSize );
+    batch->updateDynamicBuffer(m_vertexPositionBuffer, 0, positionsBufferSize, ptrVertices);
+    batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize, normalsBufferSize, ptrNormals);
+    batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize + normalsBufferSize, textureCoordsBufferSize, vtexcoords.data());
+
+    if (!m_vertexPositionBuffer->build())
+    {
+        msg_error() << "Problem while building vertex buffer";
+    }
+}
+
+void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
+{
+    const VecTriangle& triangles = this->getTriangles();
+    //const VecQuad& quads = this->getQuads();
+    ////convert to triangles
+    //VecTriangle quadTriangles;
+    //for (const Quad& q : quads)
+    //{
+    //    quadTriangles.push_back(Triangle(q[0], q[1], q[2]));
+    //    quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
+    //}
+
+    size_t triangleSize = triangles.size() * 3 * sizeof(unsigned int);
+    m_indexTriangleBuffer->setSize(triangleSize);
+    batch->updateDynamicBuffer(m_indexTriangleBuffer, 0, triangleSize, triangles.data());
+
+    m_triangleNumber = triangles.size();
+
+    if (!m_indexTriangleBuffer->build())
+    {
+        msg_error() << "Problem while building index buffer";
+    }
+}
+
+void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
+{
+    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
+    QMatrix4x4 idMatrix;
+    idMatrix.setToIdentity();
+    batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, idMatrix.constData());
+
+    if (!m_uniformBuffer->build())
+    {
+        msg_error() << "Problem while building uniform buffer";
+    }
+}
+
+void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
+{
+    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
+    const VecCoord& vertices = this->getVertices();
+    const VecDeriv& vnormals = this->getVnormals();
+    const VecTexCoord& vtexcoords = this->getVtexcoords();
+
+    // Create Buffers
+    m_vertexPositionBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, 0); // set size later (when we know it)
+    m_indexTriangleBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, 0); // set size later (when we know it)
+    m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
+    
+    // Create Pipeline
+    m_srb = rhi->newShaderResourceBindings();
+    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+    m_srb->setBindings({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE),
+        });
+    if (!m_srb->build())
+    {
+        msg_error() << "Problem while building srb";
+    }
+
+    m_pipeline = rhi->newGraphicsPipeline();
+    QShader vs = loadShader(":/shaders/gl/simple.vert.qsb");
+    QShader fs = loadShader(":/shaders/gl/simple.frag.qsb");
+    if (!vs.isValid())
+    {
+        msg_error() << "Problem while vs shader";
+    }
+    if (!fs.isValid())
+    {
+        msg_error() << "Problem while fs shader";
+    }
+
+    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({ 
+        { 0 } 
+    }); // 3 floats vertex + 3 floats normal + 2 floats uv
+    inputLayout.setAttributes({ 
+        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+        { 0, 1, QRhiVertexInputAttribute::Float3, quint32(sizeof(float) * 3 * vertices.size()) },
+        { 0, 2, QRhiVertexInputAttribute::Float2, quint32(sizeof(float) * 3 * vertices.size() + sizeof(float) * 3 * vnormals.size()) }
+    });
+    m_pipeline->setVertexInputLayout(inputLayout);
+    m_pipeline->setShaderResourceBindings(m_srb);
+    m_pipeline->setRenderPassDescriptor(rpDesc.get());
+    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
+    if (!m_pipeline->build())
+    {
+        msg_error() << "Problem while building pipeline";
+    }
+}
+
+void RHIModel::addResourceUpdate(QRhiResourceUpdateBatch* batch)
+{
+    if (m_vertexPositionBuffer == nullptr)
+    {
+        //initRHI not called
+        return;
+    }
+
+    //Update Buffers
+    updateVertexBuffer(batch);
+    updateIndexBuffer(batch);
+    updateUniformBuffer(batch);
+}
+
+void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
+{
+    if (m_vertexPositionBuffer == nullptr)
+    {
+        //initRHI not called
+        return;
+    }
+
+    //Create commands
+    cb->setGraphicsPipeline(m_pipeline);
+    cb->setShaderResources();
+    cb->setViewport(viewport);
+    QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
+    cb->setVertexInput(0, 1, &vbindings);// , m_indexTriangleBuffer, QRhiCommandBuffer::IndexUInt32);
+    cb->draw(3);
 }
 
 SOFA_DECL_CLASS(RHIModel)

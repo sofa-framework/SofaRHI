@@ -4,7 +4,8 @@
 namespace sofa::core::visual
 {
 
-DrawToolRHI::DrawToolRHI()
+DrawToolRHI::DrawToolRHI(QRhiPtr rhi)
+    : m_rhi(rhi)
 {
 
 }

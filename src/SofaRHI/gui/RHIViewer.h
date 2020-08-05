@@ -12,6 +12,7 @@
 
 #include <SofaRHI/DrawToolRHI.h>
 #include <SofaRHI/gui/RHIBackend.h>
+#include <SofaRHI/RHIModel.h>
 
 #include <QtGui/private/qrhi_p.h>
 #include <QtGui/private/qrhinull_p.h>
@@ -136,11 +137,12 @@ public:
 private:
     virtual void	drawScene() override;
 
+    helper::vector<RHIModel::SPtr> m_rhiModels;
     core::visual::VisualParams* m_vparams;
-    sofa::core::visual::DrawToolRHI m_drawTool;
+    sofa::core::visual::DrawToolRHI* m_drawTool;
     std::shared_ptr<QRhi> m_rhi;
     QRhiSwapChain* m_swapChain;
-    QRhiRenderPassDescriptor* m_rpDesc;
+    std::shared_ptr<QRhiRenderPassDescriptor> m_rpDesc;
     QRhiGraphicsPipeline* m_pipeline;
     QRhiBuffer* m_vbuf;
     QRhiBuffer* m_ubuf;

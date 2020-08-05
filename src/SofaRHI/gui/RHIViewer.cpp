@@ -1,8 +1,5 @@
 #include <SofaRHI/gui/RHIViewer.h>
 
-//#include <SofaRHI/gui/Qt3DPickHandler.h>
-//#include <SofaRHI/Qt3DVisualManagerLoop.h>
-
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
@@ -66,6 +63,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     gl.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
 
     m_rhi.reset(QRhi::create(currentImpl, &gl, QRhi::Flags(), nullptr));
+    m_drawTool = new sofa::core::visual::DrawToolRHI(m_rhi);
     //m_rhi->addCleanupCallback(cleanupRHI);
 
     m_window = new QWindow();
@@ -98,15 +96,15 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     m_swapChain = m_rhi->newSwapChain();
     m_swapChain->setWindow(m_window);
     m_swapChain->setFlags(QRhiSwapChain::UsedAsTransferSource);
-    m_rpDesc = m_swapChain->newCompatibleRenderPassDescriptor();
-    m_swapChain->setRenderPassDescriptor(m_rpDesc);
+    m_rpDesc.reset(m_swapChain->newCompatibleRenderPassDescriptor());
+    m_swapChain->setRenderPassDescriptor(m_rpDesc.get());
     m_swapChain->buildOrResize();
 
     /////
     m_backend.reset(new RHIBackend(this));
 
     m_vparams = core::visual::VisualParams::defaultInstance();
-    m_vparams->drawTool() = &m_drawTool;
+    m_vparams->drawTool() = m_drawTool;
 
 
     ///
@@ -190,7 +188,8 @@ void RHIViewer::setupDefaultCamera()
 
 void RHIViewer::setupMeshes()
 {
-    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+    std::shared_ptr<QRhiResourceUpdateBatch> updates;
+    updates.reset(m_rhi->nextResourceUpdateBatch());
 
     const int UNIFORM_BLOCK_SIZE = 64; // matrix 
     m_ubuf = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
@@ -237,7 +236,7 @@ void RHIViewer::setupMeshes()
     inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float3, 0 } });
     m_pipeline->setVertexInputLayout(inputLayout);
     m_pipeline->setShaderResourceBindings(m_srb);
-    m_pipeline->setRenderPassDescriptor(m_rpDesc);
+    m_pipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
     if (!m_pipeline->build())
         msg_warning("RHIViewer") << "Problem while building pipeline";
@@ -258,33 +257,32 @@ void RHIViewer::setupMeshes()
     bool readCompleted = false;
     QRhiReadbackResult readResult;
 
+    //m_rhi->beginFrame(m_swapChain); // == QRhi::FrameOpSuccess;
+    //QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
+    //QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
+    const QSize outputSize = m_swapChain->currentPixelSize();
 
-    //for (int frameNo = 0; frameNo < FRAME_COUNT; ++frameNo) {
-        m_rhi->beginFrame(m_swapChain); // == QRhi::FrameOpSuccess;
-        QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
-        QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
-        const QSize outputSize = m_swapChain->currentPixelSize();
+    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.001f, 10.0f);
 
-        QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.001f, 10.0f);
+    //
+    // custom get() function to get special BaseObject
+    // without BaseObject inheritance
+    //m_qt3dObjects.clear();
+    //using BaseObject = sofa::core::objectmodel::BaseObject;
+    groot->get<RHIModel,
+            helper::vector<RHIModel::SPtr> >
+            (&m_rhiModels, sofa::core::objectmodel::BaseContext::SearchRoot);
 
-        cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
-        updates = nullptr;
-        cb->setGraphicsPipeline(m_pipeline);
-        cb->setShaderResources(); // seems to send data cpu -> gpu ?
-        cb->setViewport(viewport);
-        QRhiCommandBuffer::VertexInput vbindings(m_vbuf, 0);
-        cb->setVertexInput(0, 1, &vbindings);
-        cb->draw(3);
+    for(auto rhiModel : m_rhiModels)
+    {
+        rhiModel->initRHI(m_rhi, m_rpDesc);
+    }
 
-        //if (frameNo == 0) {
-            
-            cb->endPass();
-        //}
-        //else {
-        //    cb->endPass();
-        //}
+    //cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates.get());
+    //        
+    //cb->endPass();
 
-        m_rhi->endFrame(m_swapChain);
+    //m_rhi->endFrame(m_swapChain);
     //}
 
 //    // Cuboid
@@ -996,52 +994,56 @@ void RHIViewer::drawScene(void)
     QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
     QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
     QSize outputSize = m_swapChain->currentPixelSize();
-    QRhiResourceUpdateBatch* updates = m_rhi->nextResourceUpdateBatch();
+    QRhiResourceUpdateBatch* updates;
+    updates = (m_rhi->nextResourceUpdateBatch());
 
     QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.0f, 10.0f);
     viewport.setMinDepth(0.001f);
     viewport.setMinDepth(10.0f);
 
-    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
+    //const int UNIFORM_BLOCK_SIZE = 64; // matrix 
 
-    QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
-    double projectionMatrix[16];
-    double modelviewMatrix[16];
+    //QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
+    //double projectionMatrix[16];
+    //double modelviewMatrix[16];
 
-    currentCamera->getProjectionMatrix(projectionMatrix);
-    currentCamera->getModelViewMatrix(modelviewMatrix);
-    for (auto i = 0; i < 16; i++)
+    //currentCamera->getProjectionMatrix(projectionMatrix);
+    //currentCamera->getModelViewMatrix(modelviewMatrix);
+    //for (auto i = 0; i < 16; i++)
+    //{
+    //    qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
+    //    qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
+    //}
+    ////qModelViewMatrix.setToIdentity();
+    ////qModelViewMatrix.scale(0.5f);
+    ////qModelViewMatrix.translate({ -0.4f,0.0f, -0.0f });
+
+    //QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+
+    ////qDebug() << qProjectionMatrix;
+    ////qDebug() << qModelViewMatrix;
+    ////qDebug() << projmodelviewMatrix;
+    ////projmodelviewMatrix.setToIdentity();
+    ////projmodelviewMatrix.rotate(45, 0, 0, 1);
+    ////qDebug() << projmodelviewMatrix;
+    //updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
+
+    for (auto rhiModel : m_rhiModels)
     {
-        qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
-        qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
+        rhiModel->addResourceUpdate(updates);
     }
-    //qModelViewMatrix.setToIdentity();
-    //qModelViewMatrix.scale(0.5f);
-    //qModelViewMatrix.translate({ -0.4f,0.0f, -0.0f });
-
-    QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
-
-    //qDebug() << qProjectionMatrix;
-    //qDebug() << qModelViewMatrix;
-    //qDebug() << projmodelviewMatrix;
-    //projmodelviewMatrix.setToIdentity();
-    //projmodelviewMatrix.rotate(45, 0, 0, 1);
-    //qDebug() << projmodelviewMatrix;
-    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
 
     cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
-    cb->setGraphicsPipeline(m_pipeline);
-    cb->setShaderResources();
-    cb->setViewport(viewport);
-    QRhiCommandBuffer::VertexInput vbindings(m_vbuf, 0);
-    cb->setVertexInput(0, 1, &vbindings);
-    cb->draw(3);
+
+    for (auto rhiModel : m_rhiModels)
+    {
+        rhiModel->updateRHI(cb, viewport);
+    }
 
     cb->endPass();
 
     m_rhi->endFrame(m_swapChain);
-
-    getSimulation()->draw(m_vparams,groot.get());
+    //getSimulation()->draw(m_vparams,groot.get());
 
 }
 
