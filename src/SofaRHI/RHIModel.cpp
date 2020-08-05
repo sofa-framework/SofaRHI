@@ -164,9 +164,25 @@ void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
 void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
 {
     const int UNIFORM_BLOCK_SIZE = 64; // matrix 
-    QMatrix4x4 idMatrix;
-    idMatrix.setToIdentity();
-    batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, idMatrix.constData());
+    const auto vparams = sofa::core::visual::VisualParams::defaultInstance(); // get from parameters
+
+    QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
+    double projectionMatrix[16];
+    double modelviewMatrix[16];
+
+    vparams->getProjectionMatrix(projectionMatrix);
+    vparams->getModelViewMatrix(modelviewMatrix);
+    for (auto i = 0; i < 16; i++)
+    {
+        qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
+        qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
+    }
+    QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+
+    //QMatrix4x4 idMatrix;
+    //idMatrix.setToIdentity();
+    //idMatrix.rotate(45, 0, 0, 1);
+    batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
 
     if (!m_uniformBuffer->build())
     {
@@ -198,7 +214,7 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     }
 
     m_pipeline = rhi->newGraphicsPipeline();
-    QShader vs = loadShader(":/shaders/gl/simple.vert.qsb");
+    QShader vs = loadShader(":/shaders/gl/simple_matrix.vert.qsb");
     QShader fs = loadShader(":/shaders/gl/simple.frag.qsb");
     if (!vs.isValid())
     {
