@@ -271,7 +271,7 @@ void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
     cb->setViewport(viewport);
     QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
     cb->setVertexInput(0, 1, &vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
-    cb->draw(m_triangleNumber * 3);
+    cb->drawIndexed(m_triangleNumber * 3);
 }
 
 SOFA_DECL_CLASS(RHIModel)
