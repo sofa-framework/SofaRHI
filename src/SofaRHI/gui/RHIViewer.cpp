@@ -801,6 +801,10 @@ void RHIViewer::drawScene(void)
     cb->endPass();
 
     m_rhi->endFrame(m_swapChain);
+
+    _waitForRender = false;
+    if (!captureTimer.isActive())
+        SofaViewer::captureEvent();
 }
 
 bool RHIViewer::load()
@@ -843,19 +847,6 @@ bool RHIViewer::unload()
 
 void RHIViewer::update()
 {
-}
-
-void RHIViewer::frameUpdated()
-{
-    setupBoundingBox();
-    setupFrameAxis();
-    setupLogo();
-    _waitForRender = false;
-
-    //m_drawTool.afterDraw();
-
-    if(!captureTimer.isActive())
-        SofaViewer::captureEvent();
 }
 
 void RHIViewer::setBackgroundImage(std::string imageFileName)

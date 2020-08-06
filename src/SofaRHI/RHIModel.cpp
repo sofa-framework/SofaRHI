@@ -237,6 +237,12 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     m_pipeline->setShaderResourceBindings(m_srb);
     m_pipeline->setRenderPassDescriptor(rpDesc.get());
     m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
+    m_pipeline->setDepthTest(false);
+    m_pipeline->setDepthWrite(true);
+    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_pipeline->setStencilTest(false);
+    m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+    
     if (!m_pipeline->build())
     {
         msg_error() << "Problem while building pipeline";

@@ -167,7 +167,6 @@ protected:
 
 public slots:
     void resizeView(QSize size);
-    void frameUpdated();
     void updateVisualParameters();
 
     friend class RHIBackend;
