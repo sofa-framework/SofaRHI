@@ -69,8 +69,6 @@ public:
     /// and can be used to unregister classes associated with in the the ObjectFactory.
     static int DisableViewer();
 
-    void setupRHI();
-
     RHIViewer( QWidget* parent, const char* name="", const unsigned int nbMSAASamples = 1, bool replaceOgl = true );
     ~RHIViewer() override;
 
@@ -107,20 +105,14 @@ signals:
 
 
 protected:
-    void setupDefaultCamera();
     void setupDefaultLight();
     void setupBoundingBox();
     void setupFrameAxis();
     void setupLogo();
 
     void setupMeshes();
-    void resetViewCenter();
 
     virtual void viewAll()  override {}
-    virtual void setViewFromViewCenter(const defaulttype::Vector3& pos,
-                                       const defaulttype::Vector3& upVector,
-                                       const defaulttype::Vector3& viewCenter) ;
-
 public:
 
     sofa::simulation::Node* getScene() override
@@ -161,7 +153,6 @@ private:
 protected:
     friend class InteractionEventManager;
 
-    void cleanupRHI();
     void keyPressEvent ( QKeyEvent * e ) override;
     void keyReleaseEvent ( QKeyEvent * e ) override;
     void mousePressEvent ( QMouseEvent * e ) override;

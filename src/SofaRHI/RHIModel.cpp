@@ -179,9 +179,6 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
     }
     QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
 
-    //QMatrix4x4 idMatrix;
-    //idMatrix.setToIdentity();
-    //idMatrix.rotate(45, 0, 0, 1);
     batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
 
     if (!m_uniformBuffer->build())

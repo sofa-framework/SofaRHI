@@ -142,10 +142,6 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 	
     setBackgroundImage();
 	
-
-    m_lookSpeed = -100.0f;
-    m_linearSpeed = -100.0f;
-    this->setupDefaultCamera();
     this->setupDefaultLight();
 
 }
@@ -157,114 +153,8 @@ RHIViewer::~RHIViewer()
 {
 }
 
-static QShader loadShader(const char* name)
-{
-    QFile f(QString::fromUtf8(name));
-    if (f.open(QIODevice::ReadOnly)) {
-        const QByteArray contents = f.readAll();
-        return QShader::fromSerialized(contents);
-    }
-    return QShader();
-}
-
-void RHIViewer::cleanupRHI()
-{
-
-}
-
-void RHIViewer::setupDefaultCamera()
-{
- //   m_cameraController = new Qt3DCameraController(m_defaultCamera);
- //   //m_cameraController = new Qt3DExtras::QOrbitCameraController(m_defaultCamera);
- //   m_cameraController->setLinearSpeed(m_linearSpeed);
- //   m_cameraController->setLookSpeed(m_lookSpeed);
- //   m_cameraController->setCamera(m_defaultCamera);
-
-	//m_defaultCamera->setFieldOfView(45.0f);
- //   m_defaultCamera->setPosition(QVector3D(0, 0, 100.0f));
- //   m_defaultCamera->setUpVector(QVector3D(0, 1, 0));
- //   m_defaultCamera->setViewCenter(QVector3D(0, 0, 0));
-}
-
 void RHIViewer::setupMeshes()
 {
-    std::shared_ptr<QRhiResourceUpdateBatch> updates;
-    updates.reset(m_rhi->nextResourceUpdateBatch());
-
-    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
-    m_ubuf = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
-    if (!m_ubuf->build())
-        msg_warning("RHIViewer") << "Problem while building u buffer";
-
-    QMatrix4x4 idMatrix;
-    idMatrix.setToIdentity();
-    updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, idMatrix.constData());
-
-    m_srb = m_rhi->newShaderResourceBindings();
-    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
-    m_srb->setBindings({
-                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_ubuf, 0, UNIFORM_BLOCK_SIZE),
-        });
-    if (!m_srb->build())
-        msg_warning("RHIViewer") << "Problem while building srb";
-
-    m_pipeline = (m_rhi->newGraphicsPipeline());
-
-    //Vertex Shader
-    QShader vs = loadShader(":/shaders/gl/simple_matrix.vert.qsb");
-    if (!vs.isValid())
-        msg_warning("RHIViewer") << "Problem while vs shader";
-    QShaderDescription shaderDesc = vs.description();
-    if (shaderDesc.uniformBlocks().isEmpty())
-        msg_warning("RHIViewer") << "Problem with uniformBlocks of vs shader";
-    if(shaderDesc.uniformBlocks().first().size !=  UNIFORM_BLOCK_SIZE)
-        msg_warning("RHIViewer") << "Problem with size of uniformBlocks of vs shader";
-
-    //Fragment Shader
-    QShader fs = loadShader(":/shaders/gl/simple.frag.qsb");
-    if (!fs.isValid())
-        msg_warning("RHIViewer") << "Problem while fs shader";
-    //shaderDesc = fs.description();
-    //if (shaderDesc.uniformBlocks().isEmpty())
-    //    msg_warning("RHIViewer") << "Problem with uniformBlocks of fs shader";
-    //if (shaderDesc.uniformBlocks().first().size != UNIFORM_BLOCK_SIZE)
-    //    msg_warning("RHIViewer") << "Problem with size of uniformBlocks of fs shader";
-
-    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
-    QRhiVertexInputLayout inputLayout;
-    inputLayout.setBindings({ { 3 * sizeof(float) } });
-    inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float3, 0 } });
-    m_pipeline->setVertexInputLayout(inputLayout);
-    m_pipeline->setShaderResourceBindings(m_srb);
-    m_pipeline->setRenderPassDescriptor(m_rpDesc.get());
-    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    if (!m_pipeline->build())
-        msg_warning("RHIViewer") << "Problem while building pipeline";
-
-    static const float vertices[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-    };
-    
-    m_vbuf = m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(vertices));
-    if (!m_vbuf->build())
-        msg_warning("RHIViewer") << "Problem while building buffer";
-    updates->uploadStaticBuffer(m_vbuf, vertices);
-
-    const int framesInFlight = m_rhi->resourceLimit(QRhi::FramesInFlight);
-    const int FRAME_COUNT = framesInFlight + 1;
-    bool readCompleted = false;
-    QRhiReadbackResult readResult;
-
-    //m_rhi->beginFrame(m_swapChain); // == QRhi::FrameOpSuccess;
-    //QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
-    //QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
-    const QSize outputSize = m_swapChain->currentPixelSize();
-
-    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.001f, 10.0f);
-
-    //
     // custom get() function to get special BaseObject
     // without BaseObject inheritance
     //m_qt3dObjects.clear();
@@ -278,68 +168,11 @@ void RHIViewer::setupMeshes()
         rhiModel->initRHI(m_rhi, m_rpDesc);
     }
 
-    //cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates.get());
-    //        
-    //cb->endPass();
-
-    //m_rhi->endFrame(m_swapChain);
-    //}
-
-//    // Cuboid
-//    auto cuboidMesh = new Qt3DExtras::QCuboidMesh();
-
-//    // CuboidMesh Transform
-//    auto cuboidTransform = new Qt3DCore::QTransform();
-//    cuboidTransform->setScale(10.0f);
-//    cuboidTransform->setTranslation(QVector3D(0.0f, 0.0f, 0.0f));
-//    cuboidTransform->setRotation(QQuaternion(1,1.5,1,0).normalized());
-
-//    auto cuboidMaterial = new Qt3DExtras::QPhongMaterial();
-//    cuboidMaterial->setDiffuse(QColor(QRgb(0x005FFF)));
-
-//    // assamble entity
-//    auto cuboidEntity = new Qt3DCore::QEntity();
-//    cuboidEntity->addComponent(cuboidMesh);
-//    cuboidEntity->addComponent(cuboidMaterial);
-//    cuboidEntity->addComponent(cuboidTransform);
-//    cuboidEntity->setParent(m_rootEntity);
-
-//    auto spriteEntity = new QEntity(m_rootEntity);
-//    auto spriteSheet = new QSpriteSheet(spriteEntity);
-//    std::string textureFile = "/Volumes/Storage/Work/Sofa/src/master_fredroy/share/textures/board.png";
-//    auto texImage = new Qt3DRender::QTextureImage();
-//    texImage->setSource(QUrl::fromLocalFile(textureFile.c_str()));
-//    auto tex2d = new Qt3DRender::QTexture2D();
-//    tex2d->addTextureImage(texImage);
-
-//    spriteSheet->setTexture(tex2d);
-//    spriteSheet->addSprite(0,0,10,10);
-//    spriteSheet->setCurrentIndex(0);
-
-    // custom get() function to get special BaseObject
-    // without BaseObject inheritance
-    //m_qt3dObjects.clear();
-    //using BaseObject = sofa::core::objectmodel::BaseObject;
-    //helper::vector<BaseObject::SPtr> baseObjects;
-    //groot->get<sofa::core::objectmodel::BaseObject,
-    //        helper::vector<BaseObject::SPtr> >
-    //        (&baseObjects, sofa::core::objectmodel::BaseContext::SearchRoot);
-
-    //for(auto bo : baseObjects)
-    //{
-    //    if(Qt3DObject* qo = dynamic_cast<Qt3DObject*>(bo.get()))
-    //    {
-    //        qo->initQt();
-    //        qo->updateQt();
-    //        qo->getRootEntity()->setParent(m_objectsEntity);
-    //    }
-
-    //}
-
 }
 
 void RHIViewer::setupDefaultLight()
 {
+    // Light is located at the same place as the camera
 //    auto defaultLightEntity = new Qt3DCore::QEntity(m_rootEntity);
 ////    auto defaultLight = new Qt3DRender::QDirectionalLight();
 //    auto defaultLight = new Qt3DRender::QPointLight();
@@ -720,14 +553,9 @@ void RHIViewer::mouseMoveEvent(QMouseEvent * e)
     if(!mouseEvent(e))
     {
         SofaViewer::mouseMoveEvent(e);
-
-        //m_cameraController->setLinearSpeed(m_linearSpeed);
-        //m_cameraController->setLookSpeed(m_lookSpeed);
     }
     else
     {
-        //m_cameraController->setLookSpeed(0.0f);
-        //m_cameraController->setLinearSpeed(0.0f);
     }
 }
 
@@ -791,57 +619,17 @@ void RHIViewer::resetView()
 
 void RHIViewer::newView()
 {
-    resetViewCenter();
-
+    SofaViewer::newView();
 }
 
 void RHIViewer::getView(Vector3& pos, Quat& ori) const
 {
-    //const QVector3D& qpos = m_defaultCamera->position();
-    //pos[0] = qpos[0];
-    //pos[1] = qpos[1];
-    //pos[2] = qpos[2];
-
-    //const QQuaternion& qori = m_defaultCamera->transform()->rotation();
-    //ori[0] = qori.x();
-    //ori[1] = qori.y();
-    //ori[2] = qori.z();
-    //ori[3] = qori.scalar();
-
-}
-
-
-void RHIViewer::setViewFromViewCenter(const defaulttype::Vector3& pos,
-                                   const defaulttype::Vector3& upVector,
-                                   const defaulttype::Vector3& viewCenter)
-{
-    /*QVector3D temp;
-    temp[0] = pos[0];
-    temp[1] = pos[1];
-    temp[2] = pos[2];
-    m_defaultCamera->setPosition(temp);
-
-    temp[0] = upVector[0];
-    temp[1] = upVector[1];
-    temp[2] = upVector[2];
-    m_defaultCamera->setUpVector(temp);
-
-    temp[0] = viewCenter[0];
-    temp[1] = viewCenter[1];
-    temp[2] = viewCenter[2];
-    m_defaultCamera->setViewCenter(temp);*/
-
+    SofaViewer::getView(pos, ori);
 }
 
 void RHIViewer::setView(const Vector3& pos, const Quat &ori)
 {
-    //Vector3 upVec = ori.rotate(Vector3 {0.0f, 1.0f, 0.0f});
-    //QVector3D qUpVec(upVec[0], upVec[1], upVec[2]);
-
-    //QVector3D qpos ( pos[0], pos[1], pos[2] );
-
-    //m_defaultCamera->setPosition(qpos);
-    //m_defaultCamera->setUpVector(qUpVec);
+    SofaViewer::setView(pos, ori);
 }
 
 void RHIViewer::saveView()
@@ -956,21 +744,14 @@ void RHIViewer::paintEvent ( QPaintEvent * /*event*/ )
 
 }
 
-void RHIViewer::resetViewCenter()
-{
-    //m_defaultCamera->viewEntity(m_objectsEntity);
-}
-
 void RHIViewer::updateVisualParameters()
 {
 	if (!groot)
 		return;
 
     //TODO: compute znear zfar
-    m_vparams->zNear() = 0.001;
-    m_vparams->zFar() = 1000;
-    //m_vparams->zNear() = m_defaultCamera->nearPlane();
-    //m_vparams->zFar() = m_defaultCamera->farPlane();
+    m_vparams->zNear() = currentCamera->getZNear();
+    m_vparams->zFar() = currentCamera->getZFar();
 
     sofa::core::visual::VisualParams::Viewport vp{0, 0, m_container->width(), m_container->height() };
     m_vparams->viewport() = vp;
@@ -997,43 +778,14 @@ void RHIViewer::drawScene(void)
     QRhiResourceUpdateBatch* updates;
     updates = (m_rhi->nextResourceUpdateBatch());
 
-    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), 0.0f, 10.0f);
-    viewport.setMinDepth(0.001f);
-    viewport.setMinDepth(10.0f);
-
-    //const int UNIFORM_BLOCK_SIZE = 64; // matrix 
-
-    //QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
-    //double projectionMatrix[16];
-    //double modelviewMatrix[16];
-
-    //currentCamera->getProjectionMatrix(projectionMatrix);
-    //currentCamera->getModelViewMatrix(modelviewMatrix);
-    //for (auto i = 0; i < 16; i++)
-    //{
-    //    qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
-    //    qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
-    //}
-    ////qModelViewMatrix.setToIdentity();
-    ////qModelViewMatrix.scale(0.5f);
-    ////qModelViewMatrix.translate({ -0.4f,0.0f, -0.0f });
-
-    //QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
-
-    ////qDebug() << qProjectionMatrix;
-    ////qDebug() << qModelViewMatrix;
-    ////qDebug() << projmodelviewMatrix;
-    ////projmodelviewMatrix.setToIdentity();
-    ////projmodelviewMatrix.rotate(45, 0, 0, 1);
-    ////qDebug() << projmodelviewMatrix;
-    //updates->updateDynamicBuffer(m_ubuf, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
+    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), currentCamera->getZNear(), currentCamera->getZFar());
 
     for (auto rhiModel : m_rhiModels)
     {
         rhiModel->addResourceUpdate(updates);
     }
 
-    cb->beginPass(rt, Qt::green, { 1.0f, 0 }, updates);
+    cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
     for (auto rhiModel : m_rhiModels)
     {
@@ -1043,8 +795,6 @@ void RHIViewer::drawScene(void)
     cb->endPass();
 
     m_rhi->endFrame(m_swapChain);
-    //getSimulation()->draw(m_vparams,groot.get());
-
 }
 
 bool RHIViewer::load()
