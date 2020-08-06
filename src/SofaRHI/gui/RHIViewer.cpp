@@ -59,6 +59,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 
     //// RHI Setup
     QRhi::Implementation currentImpl = QRhi::OpenGLES2;
+    //QRhi::Implementation currentImpl = QRhi::D3D11;
     QRhiGles2InitParams gl;
     gl.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
 
@@ -73,16 +74,21 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     case QRhi::OpenGLES2:
 #if QT_CONFIG(opengl)
         m_window->setFormat(QRhiGles2InitParams::adjustedFormat());
+        msg_info("RHIViewer") << "Will use OpenGLES2";
 #endif
         //Q_FALLTHROUGH();
+        break;
     case QRhi::D3D11:
         m_window->setSurfaceType(QSurface::OpenGLSurface);
+        msg_info("RHIViewer") << "Will use D3D11";
         break;
     case QRhi::Metal:
         m_window->setSurfaceType(QSurface::MetalSurface);
+        msg_info("RHIViewer") << "Will use Metal";
         break;
     case QRhi::Vulkan:
         m_window->setSurfaceType(QSurface::VulkanSurface);
+        msg_info("RHIViewer") << "Will use Vulkan";
 #if QT_CONFIG(vulkan)
         window->setVulkanInstance(&vulkanInstance);
 #endif

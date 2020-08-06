@@ -1,7 +1,9 @@
 <RCC>
     <qresource prefix="/">
-        <file>shaders/gl/simple.frag.qsb</file>
-        <file>shaders/gl/simple_matrix.vert.qsb</file>
         <file>shaders/gl/simple.vert.qsb</file>
+        <file>shaders/gl/simple_matrix.vert.qsb</file>
+        <file>shaders/gl/simple.frag.qsb</file>
+        <file>shaders/gl/phong.vert.qsb</file>
+        <file>shaders/gl/phong.frag.qsb</file>
     </qresource>
 </RCC>

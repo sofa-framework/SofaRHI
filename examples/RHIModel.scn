@@ -3,7 +3,7 @@
 
     <AddDataRepository path="."/>
 
-	<MeshObjLoader name='myLoader' filename='data/triangle.obj'/>
+	<MeshObjLoader name='myLoader' filename='mesh/dragon.obj'/>
     <VisualModel src="@myLoader" />
 
     <InteractiveCamera />

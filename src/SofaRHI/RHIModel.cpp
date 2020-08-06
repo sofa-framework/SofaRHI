@@ -21,6 +21,7 @@ RHIModel::RHIModel()
     , m_bTopologyHasChanged(false)
     , m_vertexPositionBuffer(nullptr)
     , m_indexTriangleBuffer(nullptr)
+    , m_uniformBuffer(nullptr)
 {
 }
 
@@ -149,11 +150,11 @@ void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
     //    quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
     //}
 
-    size_t triangleSize = triangles.size() * 3 * sizeof(unsigned int);
+    m_triangleNumber = triangles.size();
+
+    size_t triangleSize = m_triangleNumber * sizeof(triangles[0]);
     m_indexTriangleBuffer->setSize(triangleSize);
     batch->updateDynamicBuffer(m_indexTriangleBuffer, 0, triangleSize, triangles.data());
-
-    m_triangleNumber = triangles.size();
 
     if (!m_indexTriangleBuffer->build())
     {
@@ -211,8 +212,8 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     }
 
     m_pipeline = rhi->newGraphicsPipeline();
-    QShader vs = loadShader(":/shaders/gl/simple_matrix.vert.qsb");
-    QShader fs = loadShader(":/shaders/gl/simple.frag.qsb");
+    QShader vs = loadShader(":/shaders/gl/phong.vert.qsb");
+    QShader fs = loadShader(":/shaders/gl/phong.frag.qsb");
     if (!vs.isValid())
     {
         msg_error() << "Problem while vs shader";
@@ -269,8 +270,8 @@ void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
     cb->setShaderResources();
     cb->setViewport(viewport);
     QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
-    cb->setVertexInput(0, 1, &vbindings);// , m_indexTriangleBuffer, QRhiCommandBuffer::IndexUInt32);
-    cb->draw(3);
+    cb->setVertexInput(0, 1, &vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
+    cb->draw(m_triangleNumber * 3);
 }
 
 SOFA_DECL_CLASS(RHIModel)

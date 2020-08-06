@@ -192,7 +192,8 @@ public:
     virtual void clear() override;
 
     // RHI specific
-    virtual QRhiPtr getRHI() { return m_rhi; };
+    QRhiPtr getRHI() { return m_rhi; };
+    void setLight();
 
 private:
 
