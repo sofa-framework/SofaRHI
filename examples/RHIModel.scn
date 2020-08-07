@@ -1,4 +1,4 @@
-<Node name="root" gravity="0 -100 0" dt="0.04" >
+<Node name="root" gravity="0 -1000 0" dt="0.04" >
     <RequiredPlugin pluginName="SofaRHI" />
 
     <AddDataRepository path="."/>
@@ -11,7 +11,7 @@
         <MechanicalObject name="mechanicalDofs" />
         <UniformMass  totalMass="1" />
         <HexahedronFEMForceField template="Vec3d" name="FEM" method="large" poissonRatio="0.3" youngModulus="3000" />
-        <FixedConstraint  name="FixedConstraint" indices="3" />
+        <FixedConstraint  name="FixedConstraint" indices="3  418" />
 
 		<Node name="Visual" >
 			<MeshObjLoader name='myLoader' filename='mesh/dragon.obj'/>

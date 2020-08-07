@@ -178,7 +178,7 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
         qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
         qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
     }
-    QMatrix4x4 projmodelviewMatrix = qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+    QMatrix4x4 projmodelviewMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
 
     batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
 
@@ -237,16 +237,22 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     m_pipeline->setShaderResourceBindings(m_srb);
     m_pipeline->setRenderPassDescriptor(rpDesc.get());
     m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    m_pipeline->setDepthTest(false);
+    m_pipeline->setDepthTest(true);
     m_pipeline->setDepthWrite(true);
     m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
     m_pipeline->setStencilTest(false);
-    m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
     
     if (!m_pipeline->build())
     {
         msg_error() << "Problem while building pipeline";
     }
+
+    // SOFA gives a projection matrix for OpenGL system
+    // but other graphics API compute differently their clip space
+    // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
+    // clipSpaceCorrMatrix() return a matrix to convert for other systems and identity for OpenGL
+    m_correctionMatrix = rhi->clipSpaceCorrMatrix(); 
 }
 
 void RHIModel::addResourceUpdate(QRhiResourceUpdateBatch* batch)

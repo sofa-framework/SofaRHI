@@ -98,9 +98,16 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     }
 
     m_container = createWindowContainer(m_window, this);
+    
+    auto ds = m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil,
+        QSize(), // no need to set the size yet
+        1,
+        QRhiRenderBuffer::UsedWithSwapChainOnly);
 
     m_swapChain = m_rhi->newSwapChain();
     m_swapChain->setWindow(m_window);
+    m_swapChain->setDepthStencil(ds);
+
     m_swapChain->setFlags(QRhiSwapChain::UsedAsTransferSource);
     m_rpDesc.reset(m_swapChain->newCompatibleRenderPassDescriptor());
     m_swapChain->setRenderPassDescriptor(m_rpDesc.get());
@@ -784,7 +791,7 @@ void RHIViewer::drawScene(void)
     QRhiResourceUpdateBatch* updates;
     updates = (m_rhi->nextResourceUpdateBatch());
 
-    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()), currentCamera->getZNear(), currentCamera->getZFar());
+    QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));// , currentCamera->getZNear(), currentCamera->getZFar());
 
     for (auto rhiModel : m_rhiModels)
     {

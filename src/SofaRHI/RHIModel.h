@@ -77,6 +77,7 @@ private:
     QRhiBuffer* m_uniformBuffer;
     QRhiBuffer* m_vertexPositionBuffer;
     QRhiBuffer* m_indexTriangleBuffer;
+    QMatrix4x4 m_correctionMatrix;
 
     std::size_t m_triangleNumber;
 
