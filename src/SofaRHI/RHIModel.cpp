@@ -164,7 +164,6 @@ void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
 
 void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
 {
-    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
     const auto vparams = sofa::core::visual::VisualParams::defaultInstance(); // get from parameters
 
     QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
@@ -178,9 +177,12 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
         qProjectionMatrix.data()[i] = float(projectionMatrix[i]);
         qModelViewMatrix.data()[i] = float(modelviewMatrix[i]);
     }
-    QMatrix4x4 projmodelviewMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+    const auto inverseModelViewMatrix = qModelViewMatrix.inverted();
 
-    batch->updateDynamicBuffer(m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE, projmodelviewMatrix.constData());
+    const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
+    const QMatrix4x4 projmodelviewMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+    batch->updateDynamicBuffer(m_uniformBuffer, 0, MATRIX4_SIZE, projmodelviewMatrix.constData());
+    batch->updateDynamicBuffer(m_uniformBuffer, MATRIX4_SIZE, VEC3_SIZE, cameraPosition.data());
 
     if (!m_uniformBuffer->build())
     {
@@ -190,7 +192,6 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
 
 void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
 {
-    const int UNIFORM_BLOCK_SIZE = 64; // matrix 
     const VecCoord& vertices = this->getVertices();
     const VecDeriv& vnormals = this->getVnormals();
     const VecTexCoord& vtexcoords = this->getVtexcoords();
@@ -198,13 +199,13 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     // Create Buffers
     m_vertexPositionBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, 0); // set size later (when we know it)
     m_indexTriangleBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, 0); // set size later (when we know it)
-    m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, UNIFORM_BLOCK_SIZE);
+    m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, MATRIX4_SIZE + VEC3_SIZE);
     
     // Create Pipeline
     m_srb = rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_srb->setBindings({
-                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, UNIFORM_BLOCK_SIZE),
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, MATRIX4_SIZE + VEC3_SIZE)
         });
     if (!m_srb->build())
     {

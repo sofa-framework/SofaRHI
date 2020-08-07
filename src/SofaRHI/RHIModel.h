@@ -81,6 +81,9 @@ private:
 
     std::size_t m_triangleNumber;
 
+    //TODO: define those in an helper file
+    static const int MATRIX4_SIZE{ 64 };
+    static const int VEC3_SIZE{ 12 };
 };
 
 } // namespace sofa::rhi

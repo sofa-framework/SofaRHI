@@ -11,6 +11,7 @@ layout(location = 2) out vec2 out_uv;
 layout(std140, binding = 0) uniform buf 
 {
     mat4 projection_mv_matrix;
+    vec3 camera_position;
 } ubuf;
 
 out gl_PerVertex 
