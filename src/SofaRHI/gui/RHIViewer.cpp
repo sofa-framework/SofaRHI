@@ -119,6 +119,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 {
     this->setObjectName(name);
 
+    s_keyGgraphicsAPI = "d3d";
+
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
     m_window = new QWindow();
@@ -814,11 +816,10 @@ void RHIViewer::paintEvent ( QPaintEvent * /*event*/ )
     //update VisualParams for the following draw() called by SofaObjects
     updateVisualParameters();
 
-
     //todo: do a real init of the scene
     if(m_bFirst)
     {
-        std::cout << "first update()" << std::endl;
+        //std::cout << "first update()" << std::endl;
 
         setupMeshes();
         //drawScene();
@@ -831,6 +832,22 @@ void RHIViewer::paintEvent ( QPaintEvent * /*event*/ )
         drawScene();
     }
 
+}
+
+void RHIViewer::exposeEvent(QExposeEvent* event, bool isExposed)
+{
+    // stop pushing frames when not exposed (or size is 0)
+    if ((!isExposed || (m_bHasSwapChain && m_swapChain->surfacePixelSize().isEmpty())))
+    {
+        m_notExposed = true;
+    }
+
+    // continue when exposed again and the surface has a valid size.
+    // note that the surface size can be (0, 0) even though size() reports a valid one...
+    if (isExposed && m_notExposed && !m_swapChain->surfacePixelSize().isEmpty()) {
+        m_notExposed = false;
+        m_newlyExposed = true;
+    }
 }
 
 void RHIViewer::updateVisualParameters()
@@ -872,7 +889,11 @@ void RHIViewer::drawScene()
 {
     if (!groot) return;
     
-    resizeSwapChain(); // TODO: dont do that if not resized
+    if (m_swapChain->currentPixelSize() != m_swapChain->surfacePixelSize() || m_newlyExposed)
+    {
+        resizeSwapChain();
+        m_newlyExposed = false;
+    }
 
     QRhi::FrameOpResult r = m_rhi->beginFrame(m_swapChain);
     if (r == QRhi::FrameOpSwapChainOutOfDate) {
@@ -1019,6 +1040,12 @@ bool InteractionEventManager::eventFilter(QObject* obj, QEvent* event)
     {
         QMouseEvent* keyEvent = static_cast<QMouseEvent*>(event);
         m_viewer->mouseMoveEvent(keyEvent);
+        return true;
+    }
+    else if (event->type() == QEvent::Expose)
+    {
+        QExposeEvent* exposeEvent = static_cast<QExposeEvent*>(event);
+        m_viewer->exposeEvent(exposeEvent, m_viewer->m_window->isExposed());
         return true;
     }
     else

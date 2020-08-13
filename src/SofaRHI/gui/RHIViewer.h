@@ -130,12 +130,15 @@ public:
 private:
     virtual void	drawScene() override;
 
+    bool m_notExposed { false };
+    bool m_newlyExposed { false };
     void resizeSwapChain();
     helper::vector<RHIModel::SPtr> m_rhiModels;
     core::visual::VisualParams* m_vparams;
     sofa::core::visual::DrawToolRHI* m_drawTool;
     std::shared_ptr<QRhi> m_rhi;
     QRhiSwapChain* m_swapChain;
+    bool m_bHasSwapChain{false};
     QRhiRenderBuffer* m_ds = nullptr;
     std::shared_ptr<QRhiRenderPassDescriptor> m_rpDesc;
     QRhiGraphicsPipeline* m_pipeline;
@@ -181,6 +184,7 @@ protected:
     // http://doc.qt.io/qt-5/qwidget.html#resizeEvent
     void resizeEvent ( QResizeEvent * event ) override;
     void paintEvent(QPaintEvent* event) override;
+    void exposeEvent(QExposeEvent* event, bool isExposed) ;
 
 public slots:
     void resizeView(QSize size);
