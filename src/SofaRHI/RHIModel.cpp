@@ -136,6 +136,10 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
     {
         msg_error() << "Problem while building vertex buffer";
     }
+
+    m_positionsBufferSize = positionsBufferSize;
+    m_normalsBufferSize = normalsBufferSize;
+    m_textureCoordsBufferSize = textureCoordsBufferSize;
 }
 
 void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
@@ -180,8 +184,8 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
     const auto inverseModelViewMatrix = qModelViewMatrix.inverted();
 
     const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
-    const QMatrix4x4 projmodelviewMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
-    batch->updateDynamicBuffer(m_uniformBuffer, 0, MATRIX4_SIZE, projmodelviewMatrix.constData());
+    const QMatrix4x4 mvpMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
+    batch->updateDynamicBuffer(m_uniformBuffer, 0, MATRIX4_SIZE, mvpMatrix.constData());
     batch->updateDynamicBuffer(m_uniformBuffer, MATRIX4_SIZE, VEC3_SIZE, cameraPosition.data());
 
     if (!m_uniformBuffer->build())
@@ -227,7 +231,9 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
     QRhiVertexInputLayout inputLayout;
     inputLayout.setBindings({ 
-        { 0 } 
+        { 3 * sizeof(float) } , 
+        { 3 * sizeof(float) } , 
+        { 2 * sizeof(float) }
     }); // 3 floats vertex + 3 floats normal + 2 floats uv
     inputLayout.setAttributes({ 
         { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
@@ -282,8 +288,13 @@ void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
     cb->setGraphicsPipeline(m_pipeline);
     cb->setShaderResources();
     cb->setViewport(viewport);
-    QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
-    cb->setVertexInput(0, 1, &vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
+    const QRhiCommandBuffer::VertexInput vbindings[] = {
+        { m_vertexPositionBuffer, 0 },
+        { m_vertexPositionBuffer, m_positionsBufferSize },
+        { m_vertexPositionBuffer, m_positionsBufferSize + m_normalsBufferSize }
+    };
+    //QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
+    cb->setVertexInput(0, 1, vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
     cb->drawIndexed(m_triangleNumber * 3);
 }
 

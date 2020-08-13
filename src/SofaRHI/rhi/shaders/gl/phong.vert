@@ -10,7 +10,7 @@ layout(location = 2) out vec2 out_uv;
 
 layout(std140, binding = 0) uniform buf 
 {
-    mat4 projection_mv_matrix;
+    mat4 mvp_matrix;
     vec3 camera_position;
 } ubuf;
 
@@ -21,7 +21,7 @@ out gl_PerVertex
 
 void main()
 {
-    gl_Position = ubuf.projection_mv_matrix * position;
+    gl_Position = ubuf.mvp_matrix * position;
     out_world_position = position.xyz;
     out_normal = normal;
     out_uv = uv;

@@ -8,7 +8,7 @@ layout(location = 0) out vec4 frag_color;
 
 layout(std140, binding = 0) uniform buf 
 {
-    mat4 projection_mv_matrix;
+    mat4 mvp_matrix;
     vec3 camera_position;
 } ubuf;
 

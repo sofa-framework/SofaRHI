@@ -80,6 +80,7 @@ private:
     QMatrix4x4 m_correctionMatrix;
 
     std::size_t m_triangleNumber;
+    quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
 
     //TODO: define those in an helper file
     static const int MATRIX4_SIZE{ 64 };

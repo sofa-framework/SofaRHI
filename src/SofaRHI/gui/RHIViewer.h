@@ -129,16 +129,28 @@ public:
 private:
     virtual void	drawScene() override;
 
+    void resizeSwapChain();
     helper::vector<RHIModel::SPtr> m_rhiModels;
     core::visual::VisualParams* m_vparams;
     sofa::core::visual::DrawToolRHI* m_drawTool;
     std::shared_ptr<QRhi> m_rhi;
     QRhiSwapChain* m_swapChain;
+    QRhiRenderBuffer* m_ds = nullptr;
     std::shared_ptr<QRhiRenderPassDescriptor> m_rpDesc;
     QRhiGraphicsPipeline* m_pipeline;
     QRhiBuffer* m_vbuf;
     QRhiBuffer* m_ubuf;
     QRhiShaderResourceBindings* m_srb;
+
+    //
+    QRhiRenderPassDescriptor* m_rp = nullptr;
+    bool m_vbufReady = false;
+    QRhiGraphicsPipeline* m_ps = nullptr;
+    QMatrix4x4 m_proj;
+    float m_rotation = 0;
+    float m_opacity = 1;
+    int m_opacityDir = -1;
+    //
 
     QWindow* m_window;
     QWidget* m_container;

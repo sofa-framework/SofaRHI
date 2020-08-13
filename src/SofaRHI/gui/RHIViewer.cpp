@@ -49,6 +49,25 @@ using sofa::simulation::getSimulation;
 using sofa::defaulttype::Vector3;
 using sofa::defaulttype::Quat;
 
+static float vertexData[] = {
+    // Y up (note clipSpaceCorrMatrix in m_proj), CCW
+     0.0f,   0.5f,   
+    -0.5f,  -0.5f,  
+     0.5f,  -0.5f,   
+     1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,
+};
+
+static QShader getShader(const QString& name)
+{
+    QFile f(name);
+    if (f.open(QIODevice::ReadOnly))
+        return QShader::fromSerialized(f.readAll());
+
+    return QShader();
+}
+
 /// Takes the same view file format as qglviewer
 const std::string RHIViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
@@ -59,11 +78,19 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 
     //// RHI Setup
     QRhi::Implementation currentImpl = QRhi::OpenGLES2;
+    QRhiGles2InitParams rhiInitParams;
+    rhiInitParams.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
+    //QRhiD3D11InitParams rhiInitParams;
     //QRhi::Implementation currentImpl = QRhi::D3D11;
-    QRhiGles2InitParams gl;
-    gl.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
 
-    m_rhi.reset(QRhi::create(currentImpl, &gl, QRhi::Flags(), nullptr));
+    m_rhi.reset(QRhi::create(currentImpl, &rhiInitParams));
+
+    if (!m_rhi)
+    {
+        qFatal("Failed to create RHI backend");
+        //exit
+    }
+
     m_drawTool = new sofa::core::visual::DrawToolRHI(m_rhi);
     //m_rhi->addCleanupCallback(cleanupRHI);
 
@@ -72,11 +99,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     switch (currentImpl)
     {
     case QRhi::OpenGLES2:
-#if QT_CONFIG(opengl)
         m_window->setFormat(QRhiGles2InitParams::adjustedFormat());
         msg_info("RHIViewer") << "Will use OpenGLES2";
-#endif
-        //Q_FALLTHROUGH();
         break;
     case QRhi::D3D11:
         m_window->setSurfaceType(QSurface::OpenGLSurface);
@@ -90,7 +114,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
         m_window->setSurfaceType(QSurface::VulkanSurface);
         msg_info("RHIViewer") << "Will use Vulkan";
 #if QT_CONFIG(vulkan)
-        window->setVulkanInstance(&vulkanInstance);
+        m_window->setVulkanInstance(&vulkanInstance);
 #endif
         break;
     default:
@@ -99,16 +123,16 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 
     m_container = createWindowContainer(m_window, this);
     
-    auto ds = m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil,
+    m_ds = m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil,
         QSize(), // no need to set the size yet
         1,
         QRhiRenderBuffer::UsedWithSwapChainOnly);
 
     m_swapChain = m_rhi->newSwapChain();
     m_swapChain->setWindow(m_window);
-    m_swapChain->setDepthStencil(ds);
+    m_swapChain->setDepthStencil(m_ds);
 
-    m_swapChain->setFlags(QRhiSwapChain::UsedAsTransferSource);
+    //m_swapChain->setFlags(QRhiSwapChain::UsedAsTransferSource);
     m_rpDesc.reset(m_swapChain->newCompatibleRenderPassDescriptor());
     m_swapChain->setRenderPassDescriptor(m_rpDesc.get());
     m_swapChain->buildOrResize();
@@ -170,8 +194,7 @@ void RHIViewer::setupMeshes()
 {
     // custom get() function to get special BaseObject
     // without BaseObject inheritance
-    //m_qt3dObjects.clear();
-    //using BaseObject = sofa::core::objectmodel::BaseObject;
+
     groot->get<RHIModel,
             helper::vector<RHIModel::SPtr> >
             (&m_rhiModels, sofa::core::objectmodel::BaseContext::SearchRoot);
@@ -772,6 +795,7 @@ void RHIViewer::updateVisualParameters()
     double modelviewMatrix[16];
 
     currentCamera->getProjectionMatrix(projectionMatrix);
+    currentCamera->getProjectionMatrix(projectionMatrix);
     currentCamera->getModelViewMatrix(modelviewMatrix);
 
     m_vparams->setProjectionMatrix(projectionMatrix);
@@ -780,11 +804,34 @@ void RHIViewer::updateVisualParameters()
     m_vparams->sceneBBox() = groot->f_bbox.getValue();
 }
 
-void RHIViewer::drawScene(void)
+void RHIViewer::resizeSwapChain()
+{
+    const QSize outputSize = m_swapChain->surfacePixelSize();
+
+    m_ds->setPixelSize(outputSize);
+    m_ds->build(); // == m_ds->release(); m_ds->build();
+
+    m_swapChain->buildOrResize();
+
+}
+
+void RHIViewer::drawScene()
 {
     if (!groot) return;
-    m_swapChain->buildOrResize();
-    m_rhi->beginFrame(m_swapChain); // == QRhi::FrameOpSuccess;
+    
+    resizeSwapChain(); // TODO: dont do that if not resized
+
+    QRhi::FrameOpResult r = m_rhi->beginFrame(m_swapChain);
+    if (r == QRhi::FrameOpSwapChainOutOfDate) {
+        qDebug() << "== QRhi::FrameOpSwapChainOutOfDate";
+        resizeSwapChain();
+        r = m_rhi->beginFrame(m_swapChain);
+    }
+    if (r != QRhi::FrameOpSuccess) {
+        qDebug() << "!= QRhi::FrameOpSuccess";
+        return;
+    }
+
     QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
     QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
     QSize outputSize = m_swapChain->currentPixelSize();
@@ -808,6 +855,7 @@ void RHIViewer::drawScene(void)
     cb->endPass();
 
     m_rhi->endFrame(m_swapChain);
+    
 
     _waitForRender = false;
     if (!captureTimer.isActive())
