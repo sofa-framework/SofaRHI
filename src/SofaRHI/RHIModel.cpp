@@ -237,8 +237,8 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     }); // 3 floats vertex + 3 floats normal + 2 floats uv
     inputLayout.setAttributes({ 
         { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
-        { 0, 1, QRhiVertexInputAttribute::Float3, quint32(sizeof(float) * 3 * vertices.size()) },
-        { 0, 2, QRhiVertexInputAttribute::Float2, quint32(sizeof(float) * 3 * vertices.size() + sizeof(float) * 3 * vnormals.size()) }
+        { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 }
     });
     m_pipeline->setVertexInputLayout(inputLayout);
     m_pipeline->setShaderResourceBindings(m_srb);
@@ -294,7 +294,7 @@ void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
         { m_vertexPositionBuffer, m_positionsBufferSize + m_normalsBufferSize }
     };
     //QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
-    cb->setVertexInput(0, 1, vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
+    cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
     cb->drawIndexed(m_triangleNumber * 3);
 }
 
