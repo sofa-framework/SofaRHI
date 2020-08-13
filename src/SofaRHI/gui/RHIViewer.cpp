@@ -119,7 +119,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 {
     this->setObjectName(name);
 
-    s_keyGgraphicsAPI = "d3d";
+    //s_keyGgraphicsAPI = "mtl";
 
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
@@ -149,8 +149,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     if (graphicsAPI == QRhi::Metal)
     {
         m_window->setSurfaceType(QSurface::MetalSurface);
-        QRhiMetalInitParams* mtlInitParams = new QRhiMetalInitParams();
-        initParams = mtlInitParams;
+        QRhiMetalInitParams mtlInitParams;
+        m_rhi.reset(QRhi::create(graphicsAPI, &mtlInitParams));
         msg_info("RHIViewer") << "Will use Metal";
     }
 #endif // Q_OS_DARWIN
