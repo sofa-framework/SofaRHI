@@ -1,12 +1,11 @@
 #pragma once
 
-#include <sofa/helper/system/config.h>
-
 #include <sofa/gui/qt/viewer/SofaViewer.h>
 #include <sofa/gui/ViewerFactory.h>
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
+#include <sofa/helper/ArgumentParser.h>
 
 #include <SofaSimulationCommon/xml/Element.h>
 
@@ -81,6 +80,8 @@ public:
     bool load() override;
     bool unload() override;
 
+    static int RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser);
+
 public slots:
     void resetView() override;
     virtual void saveView() override;
@@ -92,7 +93,7 @@ public slots:
     virtual void getView(defaulttype::Vector3& pos, defaulttype::Quat& ori) const override;
     virtual void setView(const defaulttype::Vector3& pos, const defaulttype::Quat &ori) override ;
     virtual void newView() override ;
-    virtual void captureEvent()  override { std::cout << "proute" <<std::endl;SofaViewer::captureEvent(); }
+    virtual void captureEvent()  override { SofaViewer::captureEvent(); }
     virtual void drawColourPicking (sofa::gui::ColourPickingVisitor::ColourCode code) override ;
     virtual void fitNodeBBox(sofa::core::objectmodel::BaseNode * node )  override { SofaViewer::fitNodeBBox(node); }
     virtual void fitObjectBBox(sofa::core::objectmodel::BaseObject * obj)  override { SofaViewer::fitObjectBBox(obj); }
@@ -161,6 +162,10 @@ private:
     float m_linearSpeed;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelviewMatrix;
+
+    // arguments from argument parser (static because parser is in a static function...)
+    static std::string s_keyGgraphicsAPI;
+    // other stuff if necessart
 
 protected:
     friend class InteractionEventManager;

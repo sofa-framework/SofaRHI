@@ -26,17 +26,14 @@
 #if QT_CONFIG(vulkan)
 # include <QVulkanInstance>
 # include <QtGui/private/qrhivulkan_p.h>
-# define TST_VK
 #endif
 
 #ifdef Q_OS_WIN
 #include <QtGui/private/qrhid3d11_p.h>
-# define TST_D3D11
 #endif
 
 #ifdef Q_OS_DARWIN
 # include <QtGui/private/qrhimetal_p.h>
-# define TST_MTL
 #endif
 
 Q_DECLARE_METATYPE(QRhi::Implementation)
@@ -49,77 +46,133 @@ using sofa::simulation::getSimulation;
 using sofa::defaulttype::Vector3;
 using sofa::defaulttype::Quat;
 
-static float vertexData[] = {
-    // Y up (note clipSpaceCorrMatrix in m_proj), CCW
-     0.0f,   0.5f,   
-    -0.5f,  -0.5f,  
-     0.5f,  -0.5f,   
-     1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 1.0f,
+enum class GraphicsAPI
+{
+    OpenGL,
+    Vulkan,
+    D3D11,
+    Metal
 };
 
-static QShader getShader(const QString& name)
+static std::map<std::string, std::pair<QRhi::Implementation, std::string> > s_mapGraphicsAPI
 {
-    QFile f(name);
-    if (f.open(QIODevice::ReadOnly))
-        return QShader::fromSerialized(f.readAll());
+    { "ogl", { QRhi::OpenGLES2, "OpenGL Core" } },
+    { "vlk", { QRhi::Vulkan, "Vulkan"} },
+    { "d3d", { QRhi::D3D11, "Direct3D 11"} },
+    { "mtl", { QRhi::Metal, "Metal"} }
+};
 
-    return QShader();
-}
+std::string RHIViewer::s_keyGgraphicsAPI = {"ogl"};
 
 /// Takes the same view file format as qglviewer
 const std::string RHIViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
+
+
+int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
+{
+    static std::vector<std::string> supportedAPIs;
+    
+#ifdef Q_OS_WIN
+    static std::string defaultStr = "ogl";
+
+    supportedAPIs.emplace_back(defaultStr);
+    supportedAPIs.emplace_back("d3d");
+#endif // Q_OS_WIN
+#ifdef Q_OS_DARWIN //ios or mac
+    static std::string defaultStr = "ogl";
+
+    supportedAPIs.emplace_back(defaultStr);
+    supportedAPIs.emplace_back("mtl");
+#endif // Q_OS_DARWIN
+#if defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+    static std::string defaultStr = "ogl";
+
+    supportedAPIs.emplace_back(defaultStr);
+#endif // Q_OS_LINUX || Q_OS_ANDROID
+#if QT_CONFIG(vulkan)
+    supportedAPIs.emplace_back("vlk");
+#endif // QT_CONFIG(vulkan)
+
+    std::ostringstream displayChoice;
+    displayChoice << "select graphics API between: " ;
+    for (const auto& supportedAPI : supportedAPIs)
+    {
+        displayChoice << supportedAPI << " | ";
+    }
+    argumentParser->addArgument(
+        boost::program_options::value<std::string>(&s_keyGgraphicsAPI)
+        ->default_value(defaultStr)
+        ->notifier([](const std::string value) {
+            if (std::find(supportedAPIs.begin(), supportedAPIs.end(), value) != supportedAPIs.end())
+            {
+                msg_error("RHIViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
+            }
+        }),
+        "api", displayChoice.str()
+    );
+
+    return 0;
+}
 
 RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSAASamples, bool replaceOgl)
     : QWidget(parent)
 {
     this->setObjectName(name);
 
-    //// RHI Setup
-    QRhi::Implementation currentImpl = QRhi::OpenGLES2;
-    QRhiGles2InitParams rhiInitParams;
-    rhiInitParams.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
-    //QRhiD3D11InitParams rhiInitParams;
-    //QRhi::Implementation currentImpl = QRhi::D3D11;
+    const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
-    m_rhi.reset(QRhi::create(currentImpl, &rhiInitParams));
+    m_window = new QWindow();
+
+    //// RHI Setup
+    QRhiInitParams* initParams = nullptr;
+
+    if(graphicsAPI == QRhi::OpenGLES2)
+    {
+        m_window->setFormat(QRhiGles2InitParams::adjustedFormat());
+        QRhiGles2InitParams oglInitParams;
+        oglInitParams.fallbackSurface = QRhiGles2InitParams::newFallbackSurface();
+        m_rhi.reset(QRhi::create(graphicsAPI, &oglInitParams));
+        msg_info("RHIViewer") << "Will use OpenGLES2";
+    }
+#ifdef Q_OS_WIN
+    if (graphicsAPI == QRhi::D3D11)
+    {
+        m_window->setSurfaceType(QSurface::OpenGLSurface);
+        QRhiD3D11InitParams d3dInitParams;
+        m_rhi.reset(QRhi::create(graphicsAPI, &d3dInitParams));
+        msg_info("RHIViewer") << "Will use D3D11";
+    }
+#endif // Q_OS_WIN
+#ifdef Q_OS_DARWIN
+    if (graphicsAPI == QRhi::Metal)
+    {
+        m_window->setSurfaceType(QSurface::MetalSurface);
+        QRhiMetalInitParams* mtlInitParams = new QRhiMetalInitParams();
+        initParams = mtlInitParams;
+        msg_info("RHIViewer") << "Will use Metal";
+    }
+#endif // Q_OS_DARWIN
+#if QT_CONFIG(vulkan)
+    if (graphicsAPI == QRhi::Vulkan)
+    {
+        m_window->setSurfaceType(QSurface::VulkanSurface);
+        QRhiVulkanInitParams vulkanInitParams;
+        vulkanInitParams.inst = vulkanInstance();
+        vulkanInitParams.window = m_window;
+        m_window->setVulkanInstance(&vulkanInstance);
+        msg_info("RHIViewer") << "Will use Vulkan";
+    }
+#endif // QT_CONFIG(vulkan)
 
     if (!m_rhi)
     {
-        qFatal("Failed to create RHI backend");
+        msg_fatal("RHIViewer") << "Not implemented yet";
+        qFatal("Failed to create RHI backend, quitting.");
         //exit
     }
 
     m_drawTool = new sofa::core::visual::DrawToolRHI(m_rhi);
     //m_rhi->addCleanupCallback(cleanupRHI);
-
-    m_window = new QWindow();
-
-    switch (currentImpl)
-    {
-    case QRhi::OpenGLES2:
-        m_window->setFormat(QRhiGles2InitParams::adjustedFormat());
-        msg_info("RHIViewer") << "Will use OpenGLES2";
-        break;
-    case QRhi::D3D11:
-        m_window->setSurfaceType(QSurface::OpenGLSurface);
-        msg_info("RHIViewer") << "Will use D3D11";
-        break;
-    case QRhi::Metal:
-        m_window->setSurfaceType(QSurface::MetalSurface);
-        msg_info("RHIViewer") << "Will use Metal";
-        break;
-    case QRhi::Vulkan:
-        m_window->setSurfaceType(QSurface::VulkanSurface);
-        msg_info("RHIViewer") << "Will use Vulkan";
-#if QT_CONFIG(vulkan)
-        m_window->setVulkanInstance(&vulkanInstance);
-#endif
-        break;
-    default:
-        break;
-    }
 
     m_container = createWindowContainer(m_window, this);
     
@@ -977,7 +1030,7 @@ bool InteractionEventManager::eventFilter(QObject* obj, QEvent* event)
 
 helper::SofaViewerCreator< RHIViewer> RHIViewer_class("rhi",false);
 
-int RHIGUIClass = sofa::gui::GUIManager::RegisterGUI ( "rhi", &sofa::gui::qt::RealGUI::CreateGUI, NULL, 3 );
+int RHIGUIClass = sofa::gui::GUIManager::RegisterGUI ( "rhi", &sofa::gui::qt::RealGUI::CreateGUI, &RHIViewer::RegisterGUIParameters, 3 );
 
 
 } // namespace sofa::rhi
