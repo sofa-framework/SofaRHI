@@ -118,12 +118,12 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     : QWidget(parent)
 {
     this->setObjectName(name);
+    
+    m_window = new QWindow();
 
     //s_keyGgraphicsAPI = "mtl";
 
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
-
-    m_window = new QWindow();
 
     //// RHI Setup
     QRhiInitParams* initParams = nullptr;
@@ -229,8 +229,6 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     //the view grabs events and does not give it back so we need to install an eventfilter
     InteractionEventManager* eventManager = new  InteractionEventManager(this);
     m_window->installEventFilter(eventManager);
-
-    m_bFirst = true;
 	
     setBackgroundImage();
 	
@@ -243,6 +241,11 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 // ---------------------------------------------------------
 RHIViewer::~RHIViewer()
 {
+}
+    
+void RHIViewer::setupRHI()
+{
+    
 }
 
 void RHIViewer::setupMeshes()
@@ -816,26 +819,21 @@ void RHIViewer::paintEvent ( QPaintEvent * /*event*/ )
     //update VisualParams for the following draw() called by SofaObjects
     updateVisualParameters();
 
-    //todo: do a real init of the scene
-    if(m_bFirst)
-    {
-        //std::cout << "first update()" << std::endl;
-
-        setupMeshes();
-        //drawScene();
-
-        resetView();
-        m_bFirst = false;
-    }
-    else
-    {
-        drawScene();
-    }
+    drawScene();
 
 }
 
 void RHIViewer::exposeEvent(QExposeEvent* event, bool isExposed)
 {
+    if(isExposed && ! m_bhasInit)
+    {
+        setupMeshes();
+        resetView();
+        drawScene();
+        
+        m_bhasInit = true;
+    }
+    
     // stop pushing frames when not exposed (or size is 0)
     if ((!isExposed || (m_bHasSwapChain && m_swapChain->surfacePixelSize().isEmpty())))
     {
@@ -847,6 +845,7 @@ void RHIViewer::exposeEvent(QExposeEvent* event, bool isExposed)
     if (isExposed && m_notExposed && !m_swapChain->surfacePixelSize().isEmpty()) {
         m_notExposed = false;
         m_newlyExposed = true;
+        drawScene();
     }
 }
 
@@ -877,7 +876,7 @@ void RHIViewer::updateVisualParameters()
 void RHIViewer::resizeSwapChain()
 {
     const QSize outputSize = m_swapChain->surfacePixelSize();
-
+    
     m_ds->setPixelSize(outputSize);
     m_ds->build(); // == m_ds->release(); m_ds->build();
 
@@ -934,6 +933,8 @@ void RHIViewer::drawScene()
     _waitForRender = false;
     if (!captureTimer.isActive())
         SofaViewer::captureEvent();
+    
+    emit( redrawn() );
 }
 
 bool RHIViewer::load()
@@ -972,10 +973,6 @@ bool RHIViewer::load()
 bool RHIViewer::unload()
 {
     return SofaViewer::unload();
-}
-
-void RHIViewer::update()
-{
 }
 
 void RHIViewer::setBackgroundImage(std::string imageFileName)

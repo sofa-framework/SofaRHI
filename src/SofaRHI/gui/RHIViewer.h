@@ -76,7 +76,6 @@ public:
     bool ready() override {return !_waitForRender;}
     void wait() override;
 
-    void update();
     bool load() override;
     bool unload() override;
 
@@ -106,6 +105,8 @@ signals:
 
 
 protected:
+    void setupRHI();
+    
     void setupDefaultLight();
     void setupBoundingBox();
     void setupFrameAxis();
@@ -128,7 +129,7 @@ public:
     void setBackgroundImage(std::string imageFileName = std::string("textures/SOFA_logo.bmp")) override;
 
 private:
-    virtual void	drawScene() override;
+    virtual void drawScene() override;
 
     bool m_notExposed { false };
     bool m_newlyExposed { false };
@@ -159,7 +160,7 @@ private:
     QWindow* m_window;
     QWidget* m_container;
 
-    bool m_bFirst;
+    bool m_bhasInit = false;
     QSize m_logoSize;
     float m_lookSpeed;
     float m_linearSpeed;
