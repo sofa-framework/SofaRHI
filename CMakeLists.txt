@@ -8,6 +8,7 @@ set(SOURCE_FILES
     # ${SOFARHI_SRC_DIR}/gui/RHIPickHandler.cpp
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.cpp
     # ${SOFARHI_SRC_DIR}/RHIObject.cpp
+    ${SOFARHI_SRC_DIR}/RHIUtils.cpp
     ${SOFARHI_SRC_DIR}/RHIModel.cpp
     ${SOFARHI_SRC_DIR}/DrawToolRHI.cpp
     # ${SOFARHI_SRC_DIR}/RHIVisualManagerLoop.cpp
@@ -21,6 +22,7 @@ set(HEADER_FILES
     # ${SOFARHI_SRC_DIR}/gui/RHIPickHandler.h
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.h
     # ${SOFARHI_SRC_DIR}/RHIObject.h
+    ${SOFARHI_SRC_DIR}/RHIUtils.h
     ${SOFARHI_SRC_DIR}/RHIModel.h
     ${SOFARHI_SRC_DIR}/DrawToolRHI.h
     # ${SOFARHI_SRC_DIR}/RHIVisualManagerLoop.h

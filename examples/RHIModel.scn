@@ -7,15 +7,22 @@
         <EulerImplicitSolver name="cg_odesolver"  />
         <CGLinearSolver name="linear solver" iterations="25" tolerance="1e-09" threshold="1e-09" />
 
-        <SparseGrid fileTopology="mesh/dragon.obj" n="9 9 9" />
+        <SparseGrid fileTopology="mesh/cube.obj" n="9 9 9" />
         <MechanicalObject name="mechanicalDofs" />
         <UniformMass  totalMass="1" />
         <HexahedronFEMForceField template="Vec3d" name="FEM" method="large" poissonRatio="0.3" youngModulus="3000" />
         <FixedConstraint  name="FixedConstraint" indices="3  418" />
 
 		<Node name="Visual" >
-			<MeshObjLoader name='myLoader' filename='mesh/dragon.obj'/>
+			<MeshObjLoader name='myLoader' filename='mesh/cube.obj'/>
     		<VisualModel src="@myLoader" />
+    		<BarycentricMapping />
+		</Node>
+		<Node name="Debug" >
+			<MeshObjLoader name='myLoader' filename='mesh/cube.obj'/>
+        	<MechanicalObject src="@myLoader" />
+        	<TriangleSetTopologyContainer src="@myLoader" />
+        	<TriangleSetGeometryAlgorithms src="@myLoader" />
     		<BarycentricMapping />
 		</Node>
 	</Node>

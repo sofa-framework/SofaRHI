@@ -1,13 +1,78 @@
 #include <SofaRHI/DrawToolRHI.h>
+#include <SofaRHI/RHIUtils.h>
 
-
-namespace sofa::core::visual
+namespace sofa::rhi
 {
 
-DrawToolRHI::DrawToolRHI(QRhiPtr rhi)
+DrawToolRHI::DrawToolRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     : m_rhi(rhi)
+    , m_rpDesc(rpDesc)
 {
+    //init things
+    initRHI(); //internal or called from outside?
+}
 
+void DrawToolRHI::initRHI()
+{
+    // Create Pipeline
+    m_srb = m_rhi->newShaderResourceBindings();
+    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+    m_srb->setBindings({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
+        });
+    if (!m_srb->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building srb";
+        //return or exit, abort, exception, etc.
+    }
+
+    m_pipeline = m_rhi->newGraphicsPipeline();
+    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb");
+    QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
+    if (!vs.isValid())
+    {
+        msg_error("DrawToolRHI") << "Problem while vs shader";
+        //return or exit, abort, exception, etc.
+    }
+    if (!fs.isValid())
+    {
+        msg_error("DrawToolRHI") << "Problem while fs shader";
+        //return or exit, abort, exception, etc.
+    }
+
+    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({
+        { 3 * sizeof(float) } ,
+        { 3 * sizeof(float) } ,
+        { 2 * sizeof(float) }
+        }); // 3 floats vertex + 3 floats normal + 2 floats uv
+    inputLayout.setAttributes({
+        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+        { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 }
+        });
+    m_pipeline->setVertexInputLayout(inputLayout);
+    m_pipeline->setShaderResourceBindings(m_srb);
+    m_pipeline->setRenderPassDescriptor(m_rpDesc.get());
+    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
+    m_pipeline->setDepthTest(true);
+    m_pipeline->setDepthWrite(true);
+    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_pipeline->setStencilTest(false);
+    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+
+    if (!m_pipeline->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building pipeline";
+        //return or exit, abort, exception, etc.
+    }
+
+    // SOFA gives a projection matrix for OpenGL system
+    // but other graphics API compute differently their clip space
+    // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
+    // clipSpaceCorrMatrix() return a matrix to convert for other systems and identity for OpenGL
+    m_correctionMatrix = m_rhi->clipSpaceCorrMatrix();
 }
 
 DrawToolRHI::Vector3 DrawToolRHI::computeNormal(const Vector3& a, const Vector3& b, const Vector3& c)
@@ -556,4 +621,4 @@ void DrawToolRHI::clear()
 }
 
 
-} // namespace sofa::core::visual
+} // namespace sofa::rhi

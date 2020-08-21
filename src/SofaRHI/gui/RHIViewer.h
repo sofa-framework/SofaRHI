@@ -136,7 +136,7 @@ private:
     void resizeSwapChain();
     helper::vector<RHIModel::SPtr> m_rhiModels;
     core::visual::VisualParams* m_vparams;
-    sofa::core::visual::DrawToolRHI* m_drawTool;
+    DrawToolRHI* m_drawTool;
     std::shared_ptr<QRhi> m_rhi;
     QRhiSwapChain* m_swapChain;
     bool m_bHasSwapChain{false};

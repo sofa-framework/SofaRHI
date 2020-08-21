@@ -7,6 +7,7 @@
 
 #include <sofa/helper/system/FileRepository.h>
 #include <SofaRHI/DrawToolRHI.h>
+#include <SofaRHI/RHIUtils.h>
 
 namespace sofa::rhi
 {
@@ -76,8 +77,8 @@ void RHIModel::internalDraw(const sofa::core::visual::VisualParams* vparams, boo
 
 void RHIModel::handleTopologyChange()
 {
-    std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=m_topology->beginChange();
-    std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=m_topology->endChange();
+    auto itBegin=m_topology->beginChange();
+    auto itEnd=m_topology->endChange();
 
     m_bTopologyHasChanged = (itBegin != itEnd);
 
@@ -89,9 +90,9 @@ void RHIModel::handleTopologyChange()
 
 void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
 {
-    const VecCoord& vertices = this->getVertices();
-    const VecDeriv& vnormals = this->getVnormals();
-    const VecTexCoord& vtexcoords = this->getVtexcoords();
+    const auto& vertices = this->getVertices();
+    const auto& vnormals = this->getVnormals();
+    const auto& vtexcoords = this->getVtexcoords();
 
     size_t positionsBufferSize, normalsBufferSize;
     size_t textureCoordsBufferSize = 0;
@@ -144,7 +145,7 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
 
 void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
 {
-    const VecTriangle& triangles = this->getTriangles();
+    const auto& triangles = this->getTriangles();
     //const VecQuad& quads = this->getQuads();
     ////convert to triangles
     //VecTriangle quadTriangles;
@@ -185,8 +186,8 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
 
     const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
     const QMatrix4x4 mvpMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
-    batch->updateDynamicBuffer(m_uniformBuffer, 0, MATRIX4_SIZE, mvpMatrix.constData());
-    batch->updateDynamicBuffer(m_uniformBuffer, MATRIX4_SIZE, VEC3_SIZE, cameraPosition.data());
+    batch->updateDynamicBuffer(m_uniformBuffer, 0, utils::MATRIX4_SIZE, mvpMatrix.constData());
+    batch->updateDynamicBuffer(m_uniformBuffer, utils::MATRIX4_SIZE, utils::VEC3_SIZE, cameraPosition.data());
 
     if (!m_uniformBuffer->build())
     {
@@ -203,13 +204,13 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     // Create Buffers
     m_vertexPositionBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, 0); // set size later (when we know it)
     m_indexTriangleBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, 0); // set size later (when we know it)
-    m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, MATRIX4_SIZE + VEC3_SIZE);
+    m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
     
     // Create Pipeline
     m_srb = rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_srb->setBindings({
-                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, MATRIX4_SIZE + VEC3_SIZE)
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
         });
     if (!m_srb->build())
     {
@@ -217,8 +218,8 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     }
 
     m_pipeline = rhi->newGraphicsPipeline();
-    QShader vs = loadShader(":/shaders/gl/phong.vert.qsb");
-    QShader fs = loadShader(":/shaders/gl/phong.frag.qsb");
+    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb");
+    QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
     if (!vs.isValid())
     {
         msg_error() << "Problem while vs shader";

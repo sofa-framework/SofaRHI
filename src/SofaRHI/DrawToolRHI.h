@@ -9,7 +9,7 @@
 
 #include <QtGui/private/qrhi_p.h>
 
-namespace sofa::core::visual
+namespace sofa::rhi
 {
 
 class DrawToolRHI : public sofa::core::visual::DrawTool
@@ -20,9 +20,10 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
     using Vec4i = sofa::defaulttype::Vec4i;
 
     using QRhiPtr = std::shared_ptr<QRhi>;
+    using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
     
 public:
-    DrawToolRHI(QRhiPtr rhi);
+    DrawToolRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
     virtual ~DrawToolRHI() override {}
 
     /// @name Primitive rendering methods
@@ -192,6 +193,7 @@ public:
     virtual void clear() override;
 
     // RHI specific
+    void initRHI();
     QRhiPtr getRHI() { return m_rhi; };
     void setLight();
 
@@ -209,7 +211,15 @@ private:
     void internalDrawHexahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
 
     QRhiPtr m_rhi;
+    QRhiRenderPassDescriptorPtr m_rpDesc;
+
+    QRhiGraphicsPipeline* m_pipeline;
+    QRhiShaderResourceBindings* m_srb;
+    QRhiBuffer* m_uniformBuffer;
+    QRhiBuffer* m_vertexPositionBuffer;
+    QRhiBuffer* m_indexTriangleBuffer;
+    QMatrix4x4 m_correctionMatrix;
 };
 
-} // namespace sofa::core::visual
+} // namespace sofa::rhi
 

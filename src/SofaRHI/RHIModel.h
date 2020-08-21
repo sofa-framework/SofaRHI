@@ -22,16 +22,6 @@ public:
     virtual void initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) = 0;
     virtual void addResourceUpdate(QRhiResourceUpdateBatch* batch) = 0;
     virtual void updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport) = 0;
-
-    static QShader loadShader(const char* name)
-    {
-        QFile f(QString::fromUtf8(name));
-        if (f.open(QIODevice::ReadOnly)) {
-            const QByteArray contents = f.readAll();
-            return QShader::fromSerialized(contents);
-        }
-        return QShader();
-    }
 };
 
 
@@ -81,10 +71,6 @@ private:
 
     std::size_t m_triangleNumber;
     quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
-
-    //TODO: define those in an helper file
-    static const int MATRIX4_SIZE{ 64 };
-    static const int VEC3_SIZE{ 12 };
 };
 
 } // namespace sofa::rhi

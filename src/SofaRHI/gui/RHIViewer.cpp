@@ -173,9 +173,6 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
         //exit
     }
 
-    m_drawTool = new sofa::core::visual::DrawToolRHI(m_rhi);
-    //m_rhi->addCleanupCallback(cleanupRHI);
-
     m_container = createWindowContainer(m_window, this);
     
     m_ds = m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil,
@@ -196,6 +193,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     m_backend.reset(new RHIBackend(this));
 
     m_vparams = core::visual::VisualParams::defaultInstance();
+    m_drawTool = new DrawToolRHI(m_rhi, m_rpDesc);
+    //m_rhi->addCleanupCallback(cleanupRHI);
     m_vparams->drawTool() = m_drawTool;
 
 
