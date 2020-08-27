@@ -18,7 +18,6 @@ using namespace sofa::component::visualmodel;
 
 RHIModel::RHIModel()
     : InheritedVisual()
-    , m_isReady(false)
     , m_bTopologyHasChanged(false)
     , m_vertexPositionBuffer(nullptr)
     , m_indexTriangleBuffer(nullptr)
@@ -31,25 +30,80 @@ void RHIModel::init()
     InheritedVisual::init();
 }
 
+
+void RHIModel::initVisual()
+{ 
+    InheritedVisual::initVisual(); 
+
+    sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+
+    // I suppose it would be better to get the visualParams given as params but it is only in update/draw steps
+    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
+
+    if (rhiDrawTool == nullptr)
+    {
+        msg_error("RHIModel") << "Can only works with RHIViewer as gui; DrawToolRHI not detected.";
+        return;
+    }
+
+    QRhiPtr rhi = rhiDrawTool->getRHI();
+    QRhiRenderPassDescriptorPtr rpDesc = rhiDrawTool->getRenderPassDescriptor();
+    if (!initRHI(rhi, rpDesc))
+    {
+        msg_error() << "Error while initializing RHI features";
+        return;
+    }
+
+    sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Valid);
+}
+
 void RHIModel::updateVisual()
 {
+    if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
+        return;
+
+    // we bypass the updateBuffers part because bugus and we want to custom anyway
     //update geometry
     InheritedVisual::updateVisual();
 
+    //a bit of inconsistency with the vparams thing
+    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
+    QRhiResourceUpdateBatch* batch = rhiDrawTool->getResourceUpdateBatch();
+
+    if (batch != nullptr)
+        updateRHIResources(batch);
 }
 
 void RHIModel::updateBuffers()
 {
-    if(!ready())
+    if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
         return;
-    // ?
+
+    m_updateGeometry = true; //modified is ...modified by InheritedVisual::updateVisual
+
 }
 
 
 void RHIModel::internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent)
 {
-    if(!ready())
+    if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
+    {
         return;
+    }
+    if(!vparams->displayFlags().getShowVisual())
+    {
+        return;
+    }
+    //if (!m_bDidUpdateBufferWorkAround)
+    //{
+    //    return;
+    //}
+
+    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(vparams->drawTool());
+    QRhiCommandBuffer* cb = rhiDrawTool->getCommandBuffer();
+    const QRhiViewport& viewport = rhiDrawTool->getViewport();
+
+    updateRHICommands(cb,viewport);
 
     //todo: cache variables to not set flags every time
     //if(!vparams->displayFlags().getShowVisual())
@@ -195,7 +249,7 @@ void RHIModel::updateUniformBuffer(QRhiResourceUpdateBatch* batch)
     }
 }
 
-void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
+bool RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
 {
     const VecCoord& vertices = this->getVertices();
     const VecDeriv& vnormals = this->getVnormals();
@@ -215,6 +269,7 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     if (!m_srb->build())
     {
         msg_error() << "Problem while building srb";
+        return false;
     }
 
     m_pipeline = rhi->newGraphicsPipeline();
@@ -223,10 +278,12 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     if (!vs.isValid())
     {
         msg_error() << "Problem while vs shader";
+        return false;
     }
     if (!fs.isValid())
     {
         msg_error() << "Problem while fs shader";
+        return false;
     }
 
     m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
@@ -254,6 +311,7 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     if (!m_pipeline->build())
     {
         msg_error() << "Problem while building pipeline";
+        return false;
     }
 
     // SOFA gives a projection matrix for OpenGL system
@@ -261,29 +319,32 @@ void RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     // https://matthewwellings.com/blog/the-new-vulkan-coordinate-system/
     // clipSpaceCorrMatrix() return a matrix to convert for other systems and identity for OpenGL
     m_correctionMatrix = rhi->clipSpaceCorrMatrix(); 
+
+    return true;
 }
 
-void RHIModel::addResourceUpdate(QRhiResourceUpdateBatch* batch)
+void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
 {
     if (m_vertexPositionBuffer == nullptr)
     {
-        //initRHI not called
         return;
     }
 
     //Update Buffers
-    updateVertexBuffer(batch);
-    updateIndexBuffer(batch);
-    updateUniformBuffer(batch);
+    if(m_updateGeometry) // we will update only when a step is done
+    {
+        updateVertexBuffer(batch);
+        updateIndexBuffer(batch);
+    }
+    updateUniformBuffer(batch); //will be updated all the time (camera, light and no step)
 }
 
-void RHIModel::updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
+void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
 {
     if (m_vertexPositionBuffer == nullptr)
     {
-        //initRHI not called
         return;
-    }
+    }    
 
     //Create commands
     cb->setGraphicsPipeline(m_pipeline);

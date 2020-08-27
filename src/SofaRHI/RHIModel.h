@@ -2,6 +2,7 @@
 
 #include <SofaRHI/config.h>
 
+#include <SofaRHI/RHIVisualModel.h>
 #include <SofaBaseVisual/VisualModelImpl.h>
 #include <sofa/core/DataTracker.h>
 
@@ -10,20 +11,6 @@
 
 namespace sofa::rhi
 {
-
-class RHIVisualModel
-{
-public:
-    using QRhiPtr = std::shared_ptr<QRhi>;
-    using QRhiCommandBufferPtr = std::shared_ptr<QRhiCommandBuffer>;
-    using QRhiResourceUpdateBatchPtr = std::shared_ptr<QRhiResourceUpdateBatch>;
-    using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
-
-    virtual void initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) = 0;
-    virtual void addResourceUpdate(QRhiResourceUpdateBatch* batch) = 0;
-    virtual void updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport) = 0;
-};
-
 
 class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIVisualModel
 {
@@ -37,23 +24,18 @@ public:
 
     // VisualModel API
     void init() override;
-    void initVisual() override { InheritedVisual::initVisual(); }
+    void initVisual() override;
     void updateVisual() override;
     void handleTopologyChange() override; 
     
     // RHIVisualModel API
-    void initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
-    void addResourceUpdate(QRhiResourceUpdateBatch* batch);
-    void updateRHI(QRhiCommandBuffer* cb, const QRhiViewport& viewport);
+    bool initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
+    void updateRHIResources(QRhiResourceUpdateBatch* batch);
+    void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport);
 
 private:
-
-    bool ready() { return m_isReady; }
-    void setReady(bool ready) { m_isReady = ready; }
-    bool m_isReady;
     bool m_bTopologyHasChanged;
 
-    /// name is not really relevant
     void internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent) override;
 
     void updateBuffers() override;
@@ -71,6 +53,8 @@ private:
 
     std::size_t m_triangleNumber;
     quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
+
+    bool m_updateGeometry = false;
 };
 
 } // namespace sofa::rhi

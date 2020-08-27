@@ -161,6 +161,7 @@ private:
     QWidget* m_container;
 
     bool m_bhasInit = false;
+    bool m_bHasInitTexture = false;
     QSize m_logoSize;
     float m_lookSpeed;
     float m_linearSpeed;

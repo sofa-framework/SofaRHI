@@ -1,5 +1,5 @@
-#include <SofaQt3D/Qt3DVisualManagerLoop.h>
-#include <SofaQt3D/Qt3DVisualVisitor.h>
+#include <SofaRHI/RHIVisualManagerLoop.h>
+#include <SofaRHI/RHIVisualVisitor.h>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/visual/VisualParams.h>
@@ -13,33 +13,33 @@
 
 #include <sofa/helper/AdvancedTimer.h>
 
-namespace sofa::qt3d
+namespace sofa::rhi
 {
 
-int Qt3DVisualManagerLoopClass = core::RegisterObject("Visual Loop Manager for Qt3D render")
-        .add< Qt3DVisualManagerLoop >()
+int RHIVisualManagerLoopClass = core::RegisterObject("Visual Loop Manager for the RHI render")
+        .add< RHIVisualManagerLoop >()
 ;
 
-Qt3DVisualManagerLoop::Qt3DVisualManagerLoop(simulation::Node* _gnode)
+RHIVisualManagerLoop::RHIVisualManagerLoop(simulation::Node* _gnode)
     : Inherit()
     , gRoot(_gnode)
 {
     //assert(gRoot);
 }
 
-Qt3DVisualManagerLoop::~Qt3DVisualManagerLoop()
+RHIVisualManagerLoop::~RHIVisualManagerLoop()
 {
 
 }
 
-void Qt3DVisualManagerLoop::init()
+void RHIVisualManagerLoop::init()
 {
     if (!gRoot)
         gRoot = dynamic_cast<simulation::Node*>(this->getContext());
 }
 
 
-void Qt3DVisualManagerLoop::initStep(sofa::core::ExecParams* params)
+void RHIVisualManagerLoop::initStep(sofa::core::ExecParams* params)
 {
     if ( !gRoot ) return;
     gRoot->execute<simulation::VisualInitVisitor>(params);
@@ -48,7 +48,7 @@ void Qt3DVisualManagerLoop::initStep(sofa::core::ExecParams* params)
     gRoot->execute<simulation::VisualUpdateVisitor>(params);
 }
 
-void Qt3DVisualManagerLoop::updateStep(sofa::core::ExecParams* params)
+void RHIVisualManagerLoop::updateStep(sofa::core::ExecParams* params)
 {
     if ( !gRoot ) return;
 #ifdef SOFA_DUMP_VISITOR_INFO
@@ -64,26 +64,27 @@ void Qt3DVisualManagerLoop::updateStep(sofa::core::ExecParams* params)
 
 }
 
-void Qt3DVisualManagerLoop::updateContextStep(sofa::core::visual::VisualParams* vparams)
+void RHIVisualManagerLoop::updateContextStep(sofa::core::visual::VisualParams* vparams)
 {
+    if (!gRoot) return;
+    //dont really understand what does that do ??
+    //(from the original DefaultVisualManagerLoop
     simulation::UpdateVisualContextVisitor vis(vparams);
     vis.execute(gRoot);
-
-
 }
 
-void Qt3DVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
+void RHIVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
 {
     if ( !gRoot ) return;
 
     if (gRoot->visualManager.empty())
     {
         vparams->pass() = sofa::core::visual::VisualParams::Std;
-        Qt3DVisualDrawVisitor act ( vparams );
+        RHIVisualDrawVisitor act ( vparams );
         act.setTags(this->getTags());
         gRoot->execute ( &act );
         vparams->pass() = sofa::core::visual::VisualParams::Transparent;
-        Qt3DVisualDrawVisitor act2 ( vparams );
+        RHIVisualDrawVisitor act2 ( vparams );
         act2.setTags(this->getTags());
         gRoot->execute ( &act2 );
     }
@@ -103,11 +104,11 @@ void Qt3DVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
         {
             vparams->pass() = sofa::core::visual::VisualParams::Std;
 
-            Qt3DVisualDrawVisitor act ( vparams );
+            RHIVisualDrawVisitor act ( vparams );
             act.setTags(this->getTags());
             gRoot->execute ( &act );
             vparams->pass() = sofa::core::visual::VisualParams::Transparent;
-            Qt3DVisualDrawVisitor act2 ( vparams );
+            RHIVisualDrawVisitor act2 ( vparams );
             act2.setTags(this->getTags());
             gRoot->execute ( &act2 );
         }
@@ -117,12 +118,12 @@ void Qt3DVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
     }
 }
 
-void Qt3DVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vparams, SReal* minBBox, SReal* maxBBox, bool init)
+void RHIVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vparams, SReal* minBBox, SReal* maxBBox, bool init)
 {
     simulation::VisualComputeBBoxVisitor act(vparams);
     if ( gRoot )
         gRoot->execute ( act );
-//    cerr<<"Qt3DVisualManagerLoop::computeBBoxStep, xm= " << act.minBBox[0] <<", xM= " << act.maxBBox[0] << endl;
+//    cerr<<"RHIVisualManagerLoop::computeBBoxStep, xm= " << act.minBBox[0] <<", xM= " << act.maxBBox[0] << endl;
     if (init)
     {
         minBBox[0] = (SReal)(act.minBBox[0]);
@@ -143,4 +144,4 @@ void Qt3DVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vp
     }
 }
 
-} // namespace sofa::qt3d
+} // namespace sofa::rhi

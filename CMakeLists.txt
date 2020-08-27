@@ -13,6 +13,7 @@ set(SOURCE_FILES
     ${SOFARHI_SRC_DIR}/DrawToolRHI.cpp
     # ${SOFARHI_SRC_DIR}/RHIVisualManagerLoop.cpp
     # ${SOFARHI_SRC_DIR}/RHIVisualVisitor.cpp
+    # ${SOFARHI_SRC_DIR}/RHIVisualParams.cpp
     ${SOFARHI_SRC_DIR}/initSofaRHI.cpp
 )
 
@@ -23,10 +24,12 @@ set(HEADER_FILES
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.h
     # ${SOFARHI_SRC_DIR}/RHIObject.h
     ${SOFARHI_SRC_DIR}/RHIUtils.h
+    ${SOFARHI_SRC_DIR}/RHIVisualModel.h
     ${SOFARHI_SRC_DIR}/RHIModel.h
     ${SOFARHI_SRC_DIR}/DrawToolRHI.h
     # ${SOFARHI_SRC_DIR}/RHIVisualManagerLoop.h
     # ${SOFARHI_SRC_DIR}/RHIVisualVisitor.h
+    ${SOFARHI_SRC_DIR}/RHIVisualParams.h
 )
 
 set(QT_RESOURCE_FILES

@@ -252,14 +252,14 @@ void RHIViewer::setupMeshes()
     // custom get() function to get special BaseObject
     // without BaseObject inheritance
 
-    groot->get<RHIModel,
-            helper::vector<RHIModel::SPtr> >
-            (&m_rhiModels, sofa::core::objectmodel::BaseContext::SearchRoot);
+    //groot->get<RHIModel,
+    //        helper::vector<RHIModel::SPtr> >
+    //        (&m_rhiModels, sofa::core::objectmodel::BaseContext::SearchRoot);
 
-    for(auto rhiModel : m_rhiModels)
-    {
-        rhiModel->initRHI(m_rhi, m_rpDesc);
-    }
+    //for(auto rhiModel : m_rhiModels)
+    //{
+    //    rhiModel->initRHI(m_rhi, m_rpDesc);
+    //}
 
 }
 
@@ -894,6 +894,7 @@ void RHIViewer::drawScene()
     }
 
     QRhi::FrameOpResult r = m_rhi->beginFrame(m_swapChain);
+
     if (r == QRhi::FrameOpSwapChainOutOfDate) {
         qDebug() << "== QRhi::FrameOpSwapChainOutOfDate";
         resizeSwapChain();
@@ -912,21 +913,26 @@ void RHIViewer::drawScene()
 
     QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));// , currentCamera->getZNear(), currentCamera->getZFar());
 
-    for (auto rhiModel : m_rhiModels)
+    m_drawTool->beginFrame(updates, cb, viewport);
+
+    if (!m_bHasInitTexture) // "initTexture" is the super old function for initVisual
     {
-        rhiModel->addResourceUpdate(updates);
+        getSimulation()->initTextures(groot.get()); //will call update as well so updates will be nullptr if not after beginframe
+        m_bHasInitTexture = true;
     }
+
+    getSimulation()->updateVisual(groot.get()); // will update resource batch
 
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
-    for (auto rhiModel : m_rhiModels)
-    {
-        rhiModel->updateRHI(cb, viewport);
-    }
+    getSimulation()->draw(m_vparams, groot.get()); // will update and call command
 
     cb->endPass();
 
+    m_drawTool->endFrame();
+
     m_rhi->endFrame(m_swapChain);
+
     
 
     _waitForRender = false;
@@ -948,20 +954,20 @@ bool RHIViewer::load()
     //    //wont happen because Simulation is setting the default one before :(
     //    if(!vloop)
     //    {
-    //        sofa::qt3d::Qt3DVisualManagerLoop::SPtr qt3dloop = sofa::core::objectmodel::New<Qt3DVisualManagerLoop>();
-    //        groot->addObject(qt3dloop);
+    //        RHIVisualManagerLoop::SPtr rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
+    //        groot->addObject(rhiloop);
     //    }
     //    else
     //    {
-    //        if(dynamic_cast<sofa::qt3d::Qt3DVisualManagerLoop*>(vloop.get()) == nullptr)
+    //        if(dynamic_cast<sofa::rhi::RHIVisualManagerLoop*>(vloop.get()) == nullptr)
     //        {
-    //            msg_warning("Qt3dViewer") << "This viewer needs a Qt3DVisualManagerLoop.";
-    //            msg_warning("Qt3dViewer") << "Fallback: the viewer will replace the existing one.";
+    //            msg_warning("RHIViewer") << "This viewer needs a RHIVisualManagerLoop.";
+    //            msg_warning("RHIViewer") << "Fallback: the viewer will replace the existing one.";
 
     //            groot->removeObject(vloop);
-    //            sofa::qt3d::Qt3DVisualManagerLoop::SPtr qt3dloop = sofa::core::objectmodel::New<Qt3DVisualManagerLoop>();
-    //            groot->addObject(qt3dloop);
-    //            qt3dloop->init();
+    //            RHIVisualManagerLoop::SPtr rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
+    //            groot->addObject(rhiloop);
+    //            rhiloop->init();
     //        }
     //    }
     //}

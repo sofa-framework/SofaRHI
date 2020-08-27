@@ -21,6 +21,22 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
 
     using QRhiPtr = std::shared_ptr<QRhi>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
+
+    struct VertexInputData {
+        enum class Attributes : int
+        {
+            POSITION = 0,
+            NORMAL = 1,
+            COLOR = 2,
+        };
+        struct MemoryInfo {
+            int size;
+            int offset;
+        };
+
+        std::array<MemoryInfo, 3> attributesInfo;
+        MemoryInfo indexInfo;
+    };
     
 public:
     DrawToolRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
@@ -194,14 +210,41 @@ public:
 
     // RHI specific
     void initRHI();
-    QRhiPtr getRHI() { return m_rhi; };
-    void setLight();
+    QRhiPtr getRHI() 
+    { 
+        //would be better to restrict access to rhi and provide wrapper functions for buffer, etc
+        //but lazy
+        return m_rhi; 
+    }; 
+    QRhiRenderPassDescriptorPtr getRenderPassDescriptor() 
+    {
+        return m_rpDesc;
+    }
+    QRhiResourceUpdateBatch* getResourceUpdateBatch()
+    {
+        return m_currentRUB;
+    }
+    QRhiCommandBuffer* getCommandBuffer()
+    {
+        return m_currentCB;
+    }
+    const QRhiViewport getViewport()
+    {
+        return m_currentViewport;
+    }
+
+    void beginFrame(QRhiResourceUpdateBatch* rub, QRhiCommandBuffer* cb,  const QRhiViewport& viewport);
+    void endFrame();
 
 private:
 
-    static inline Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
+    static Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
 
     /// Hidden general drawing methods
+    using Vector3f = std::array<float, 3>;
+    template<typename A, typename B>
+    static void convertVecAToVecB(const A& vecA, B& vecB);
+
     void internalDrawPoints(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors);
     void internalDrawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const std::vector<Vec4f>& colors);
     void internalDrawTriangles(const std::vector<Vector3> &points, const std::vector< Vec3i > &index, const std::vector<Vector3>  &normal, const std::vector<Vec4f>& colors);
@@ -210,7 +253,7 @@ private:
     void internalDrawTetrahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
     void internalDrawHexahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
 
-    QRhiPtr m_rhi;
+    QRhiPtr m_rhi; //needed to create Buffers
     QRhiRenderPassDescriptorPtr m_rpDesc;
 
     QRhiGraphicsPipeline* m_pipeline;
@@ -219,6 +262,16 @@ private:
     QRhiBuffer* m_vertexPositionBuffer;
     QRhiBuffer* m_indexTriangleBuffer;
     QMatrix4x4 m_correctionMatrix;
+    QRhiCommandBuffer* m_currentCB{nullptr};
+    QRhiViewport m_currentViewport;
+    QRhiResourceUpdateBatch* m_currentRUB{nullptr};
+
+    int m_currentVertexPositionBufferSize{0};
+    int m_currentIndexTriangleBufferSize{0};
+    std::vector<VertexInputData> m_vertexInputData;
+
+    static constexpr int INITIAL_VERTEX_BUFFER_SIZE{1000000 * 9 * sizeof(float)}; //large enough for 1M vertices (position + normal + color)
+    static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int)}; //large enough for 1M triangles
 };
 
 } // namespace sofa::rhi

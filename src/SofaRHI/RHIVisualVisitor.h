@@ -1,23 +1,23 @@
 #pragma once
 
-#include <SofaQt3D/config.h>
+#include <SofaRHI/config.h>
 
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/simulation/Visitor.h>
-#include <SofaQt3D/DrawToolQt3D.h>
+#include <SofaRHI/DrawToolRHI.h>
 
-namespace sofa::qt3d
+namespace sofa::rhi
 {
 
-class SOFA_SOFAQT3D_API Qt3DVisualDrawVisitor : public sofa::simulation::Visitor
+class SOFA_SOFARHI_API RHIVisualDrawVisitor : public sofa::simulation::Visitor
 {
 public:
-    Qt3DVisualDrawVisitor(core::visual::VisualParams* params)
+    RHIVisualDrawVisitor(core::visual::VisualParams* params)
         : sofa::simulation::Visitor(params)
-        , m_qt3dDrawTool(nullptr)
+        , m_rhiDrawTool(nullptr)
     {
         vparams = params;
-        m_qt3dDrawTool = dynamic_cast<sofa::core::visual::DrawToolQt3D*>(params->drawTool());
+        m_rhiDrawTool = dynamic_cast<sofa::rhi::DrawToolRHI*>(params->drawTool());
     }
 
     Result processNodeTopDown(simulation::Node* node) override;
@@ -25,22 +25,21 @@ public:
 
     virtual void processVisualModel(simulation::Node* node, core::visual::VisualModel* vm);
     virtual void processOtherObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o);
-    virtual void processCollisionModel(simulation::Node* /*node*/, core::CollisionModel* cm);
 
     virtual void fwdVisualModel(simulation::Node* node, core::visual::VisualModel* vm);
     virtual void bwdVisualModel(simulation::Node* node, core::visual::VisualModel* vm);
 
     const char* getCategoryName() const override { return "visual"; }
-    const char* getClassName() const override { return "Qt3DVisualVisitor"; }
+    const char* getClassName() const override { return "RHIVisualVisitor"; }
 
     /// qt3d visual visitor must be executed as a tree, such as forward and backward orders are coherent
     bool treeTraversal(TreeTraversalRepetition& repeat) override { repeat=NO_REPETITION; return true; }
 private:
-    sofa::core::visual::DrawToolQt3D* m_qt3dDrawTool;
+    sofa::rhi::DrawToolRHI* m_rhiDrawTool;
     core::visual::VisualParams* vparams;
 
 };
 
-} // namespace sofa::qt3d
+} // namespace sofa::rhi
 
 

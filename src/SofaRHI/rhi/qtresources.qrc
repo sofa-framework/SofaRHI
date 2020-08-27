@@ -5,5 +5,7 @@
         <file>shaders/gl/simple.frag.qsb</file>
         <file>shaders/gl/phong.vert.qsb</file>
         <file>shaders/gl/phong.frag.qsb</file>
+	<file>shaders/gl/phong_color.vert.qsb</file>
+        <file>shaders/gl/phong_color.frag.qsb</file>
     </qresource>
 </RCC>
