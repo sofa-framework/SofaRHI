@@ -9,6 +9,11 @@
 
 #include <QtGui/private/qrhi_p.h>
 
+namespace sofa::core::visual
+{
+    class VisualParams;
+}
+
 namespace sofa::rhi
 {
 
@@ -29,13 +34,22 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
             NORMAL = 1,
             COLOR = 2,
         };
+        enum class PrimitiveType : int
+        {
+            POINT = 0,
+            LINE = 1,
+            TRIANGLE = 2,
+        };
         struct MemoryInfo {
-            int size;
+            QRhiBuffer* buffer;
             int offset;
+            int size;
         };
 
         std::array<MemoryInfo, 3> attributesInfo;
         MemoryInfo indexInfo;
+        PrimitiveType primitiveType;
+        int nbPrimitive;
     };
     
 public:
@@ -233,8 +247,9 @@ public:
         return m_currentViewport;
     }
 
-    void beginFrame(QRhiResourceUpdateBatch* rub, QRhiCommandBuffer* cb,  const QRhiViewport& viewport);
+    void beginFrame(core::visual::VisualParams*  vparams, QRhiResourceUpdateBatch* rub, QRhiCommandBuffer* cb,  const QRhiViewport& viewport);
     void endFrame();
+    void executeCommands();
 
 private:
 
@@ -255,6 +270,7 @@ private:
 
     QRhiPtr m_rhi; //needed to create Buffers
     QRhiRenderPassDescriptorPtr m_rpDesc;
+    bool m_bHasInit = false;
 
     QRhiGraphicsPipeline* m_pipeline;
     QRhiShaderResourceBindings* m_srb;

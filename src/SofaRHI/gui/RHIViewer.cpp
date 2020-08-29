@@ -913,7 +913,7 @@ void RHIViewer::drawScene()
 
     QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));// , currentCamera->getZNear(), currentCamera->getZFar());
 
-    m_drawTool->beginFrame(updates, cb, viewport);
+    m_drawTool->beginFrame(m_vparams, updates, cb, viewport);
 
     if (!m_bHasInitTexture) // "initTexture" is the super old function for initVisual
     {
@@ -926,6 +926,8 @@ void RHIViewer::drawScene()
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
     getSimulation()->draw(m_vparams, groot.get()); // will update and call command
+
+    m_drawTool->executeCommands();
 
     cb->endPass();
 

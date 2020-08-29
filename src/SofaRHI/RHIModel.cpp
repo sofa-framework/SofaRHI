@@ -148,12 +148,12 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
     const auto& vnormals = this->getVnormals();
     const auto& vtexcoords = this->getVtexcoords();
 
-    size_t positionsBufferSize, normalsBufferSize;
-    size_t textureCoordsBufferSize = 0;
+    int positionsBufferSize, normalsBufferSize;
+    int textureCoordsBufferSize = 0;
 
-    positionsBufferSize = (vertices.size() * sizeof(vertices[0]));
-    normalsBufferSize = (vnormals.size() * sizeof(vnormals[0]));
-    textureCoordsBufferSize = (vtexcoords.size() * sizeof(vtexcoords[0]));
+    positionsBufferSize = int(vertices.size() * sizeof(vertices[0]));
+    normalsBufferSize = int(vnormals.size() * sizeof(vnormals[0]));
+    textureCoordsBufferSize = int(vtexcoords.size() * sizeof(vtexcoords[0]));
 
     //TODO: Check finally if double or float has an impact on rendering
     //convert vertices to float if needed
@@ -166,7 +166,7 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
             fVertices.push_back(sofa::defaulttype::Vec3f(v[0], v[1], v[2]));
         }
         ptrVertices = reinterpret_cast<const void*>(fVertices.data());
-        positionsBufferSize = (vertices.size() * sizeof(fVertices[0]));
+        positionsBufferSize = int(vertices.size() * sizeof(fVertices[0]));
     }
 
     //convert normals to float if needed
@@ -179,7 +179,7 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
             fNormals.push_back(sofa::defaulttype::Vec3f(n[0], n[1], n[2]));
         }
         ptrNormals = reinterpret_cast<const void*>(fNormals.data());
-        normalsBufferSize = (vnormals.size() * sizeof(fNormals[0]));
+        normalsBufferSize = int(vnormals.size() * sizeof(fNormals[0]));
     }
 
     m_vertexPositionBuffer->setSize(positionsBufferSize + normalsBufferSize + textureCoordsBufferSize );
@@ -209,9 +209,9 @@ void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
     //    quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
     //}
 
-    m_triangleNumber = triangles.size();
+    m_triangleNumber = int(triangles.size());
 
-    size_t triangleSize = m_triangleNumber * sizeof(triangles[0]);
+    int triangleSize = int(m_triangleNumber * sizeof(triangles[0])); 
     m_indexTriangleBuffer->setSize(triangleSize);
     batch->updateDynamicBuffer(m_indexTriangleBuffer, 0, triangleSize, triangles.data());
 
@@ -351,9 +351,9 @@ void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& view
     cb->setShaderResources();
     cb->setViewport(viewport);
     const QRhiCommandBuffer::VertexInput vbindings[] = {
-        { m_vertexPositionBuffer, 0 },
-        { m_vertexPositionBuffer, m_positionsBufferSize },
-        { m_vertexPositionBuffer, m_positionsBufferSize + m_normalsBufferSize }
+        { m_vertexPositionBuffer, quint32(0) },
+        { m_vertexPositionBuffer, quint32(m_positionsBufferSize) },
+        { m_vertexPositionBuffer, quint32(m_positionsBufferSize + m_normalsBufferSize) }
     };
     //QRhiCommandBuffer::VertexInput vbindings(m_vertexPositionBuffer, 0);
     cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);

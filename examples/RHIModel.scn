@@ -18,14 +18,20 @@
     		<VisualModel src="@myLoader" />
     		<BarycentricMapping />
 		</Node>
+		<Node name="Visual2" >
+			<MeshObjLoader name='myLoader' filename='mesh/cube.obj' translation="-5 0 0"/> 
+    		<VisualModel src="@myLoader" />
+    		<BarycentricMapping />
+		</Node>
 		<Node name="Debug" >
-			<MeshObjLoader name='myLoader' filename='mesh/cube.obj'/>
+			<MeshObjLoader name='myLoader' filename='mesh/cube.obj'  translation="-10 0 0"/>
         	<MechanicalObject src="@myLoader" />
         	<TriangleSetTopologyContainer src="@myLoader" />
-        	<TriangleSetGeometryAlgorithms src="@myLoader" />
+        	<TriangleSetGeometryAlgorithms src="@myLoader"  drawTriangles="true"/>
     		<BarycentricMapping />
 		</Node>
 	</Node>
+
 
     <InteractiveCamera />
 </Node>

@@ -51,7 +51,7 @@ private:
     QRhiBuffer* m_indexTriangleBuffer;
     QMatrix4x4 m_correctionMatrix;
 
-    std::size_t m_triangleNumber;
+    int m_triangleNumber;
     quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
 
     bool m_updateGeometry = false;
