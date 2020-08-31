@@ -19,7 +19,8 @@ void DrawToolRHI::initRHI()
     m_indexTriangleBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, INITIAL_INDEX_BUFFER_SIZE);
     m_uniformBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
 
-    // Create Pipeline
+    // Create Pipelines
+    // Triangle Pipeline 
     m_srb = m_rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_srb->setBindings({
@@ -31,7 +32,7 @@ void DrawToolRHI::initRHI()
         //return or exit, abort, exception, etc.
     }
 
-    m_pipeline = m_rhi->newGraphicsPipeline();
+    m_trianglePipeline = m_rhi->newGraphicsPipeline();
     QShader vs = utils::loadShader(":/shaders/gl/phong_color.vert.qsb");
     QShader fs = utils::loadShader(":/shaders/gl/phong_color.frag.qsb");
     if (!vs.isValid())
@@ -45,7 +46,7 @@ void DrawToolRHI::initRHI()
         //return or exit, abort, exception, etc.
     }
 
-    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    m_trianglePipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
     QRhiVertexInputLayout inputLayout;
     inputLayout.setBindings({
         { 3 * sizeof(float) } ,
@@ -57,17 +58,17 @@ void DrawToolRHI::initRHI()
         { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
         { 2, 2, QRhiVertexInputAttribute::Float4, 0 }
         });
-    m_pipeline->setVertexInputLayout(inputLayout);
-    m_pipeline->setShaderResourceBindings(m_srb);
-    m_pipeline->setRenderPassDescriptor(m_rpDesc.get());
-    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    m_pipeline->setDepthTest(true);
-    m_pipeline->setDepthWrite(true);
-    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_pipeline->setStencilTest(false);
-    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+    m_trianglePipeline->setVertexInputLayout(inputLayout);
+    m_trianglePipeline->setShaderResourceBindings(m_srb);
+    m_trianglePipeline->setRenderPassDescriptor(m_rpDesc.get());
+    m_trianglePipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
+    m_trianglePipeline->setDepthTest(true);
+    m_trianglePipeline->setDepthWrite(true);
+    m_trianglePipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_trianglePipeline->setStencilTest(false);
+    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
 
-    if (!m_pipeline->build())
+    if (!m_trianglePipeline->build())
     {
         msg_error("DrawToolRHI") << "Problem while building pipeline";
         //return or exit, abort, exception, etc.
@@ -132,7 +133,7 @@ void DrawToolRHI::endFrame()
 
 void DrawToolRHI::executeCommands()
 {
-    m_currentCB->setGraphicsPipeline(m_pipeline);
+    m_currentCB->setGraphicsPipeline(m_trianglePipeline);
     m_currentCB->setShaderResources();
     m_currentCB->setViewport(m_currentViewport);
 

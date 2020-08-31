@@ -18,7 +18,6 @@ using namespace sofa::component::visualmodel;
 
 RHIModel::RHIModel()
     : InheritedVisual()
-    , m_bTopologyHasChanged(false)
     , m_vertexPositionBuffer(nullptr)
     , m_indexTriangleBuffer(nullptr)
     , m_uniformBuffer(nullptr)
@@ -79,8 +78,7 @@ void RHIModel::updateBuffers()
     if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
         return;
 
-    m_updateGeometry = true; //modified is ...modified by InheritedVisual::updateVisual
-
+    m_needUpdatePositions = true;
 }
 
 
@@ -134,11 +132,9 @@ void RHIModel::handleTopologyChange()
     auto itBegin=m_topology->beginChange();
     auto itEnd=m_topology->endChange();
 
-    m_bTopologyHasChanged = (itBegin != itEnd);
+    m_needUpdateTopology = (itBegin != itEnd);
 
     InheritedVisual::handleTopologyChange();
-
-    updateBuffers();
 
 }
 
@@ -200,20 +196,23 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch)
 void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
 {
     const auto& triangles = this->getTriangles();
-    //const VecQuad& quads = this->getQuads();
-    ////convert to triangles
-    //VecTriangle quadTriangles;
-    //for (const Quad& q : quads)
-    //{
-    //    quadTriangles.push_back(Triangle(q[0], q[1], q[2]));
-    //    quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
-    //}
+    const VecQuad& quads = this->getQuads();
+    //convert to triangles
+    VecTriangle quadTriangles;
+    for (const Quad& q : quads)
+    {
+        quadTriangles.push_back(Triangle(q[0], q[1], q[2]));
+        quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
+    }
 
-    m_triangleNumber = int(triangles.size());
+    int triangleSize = int(triangles.size() * sizeof(triangles[0]));
+    int quadTrianglesSize = int(quadTriangles.size() * sizeof(quadTriangles[0]));
 
-    int triangleSize = int(m_triangleNumber * sizeof(triangles[0])); 
-    m_indexTriangleBuffer->setSize(triangleSize);
+    m_indexTriangleBuffer->setSize(triangleSize + quadTrianglesSize);
     batch->updateDynamicBuffer(m_indexTriangleBuffer, 0, triangleSize, triangles.data());
+    batch->updateDynamicBuffer(m_indexTriangleBuffer, triangleSize, quadTrianglesSize, quadTriangles.data());
+
+    m_triangleNumber = int(triangles.size()) + int(quadTriangles.size());
 
     if (!m_indexTriangleBuffer->build())
     {
@@ -260,7 +259,8 @@ bool RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     m_indexTriangleBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, 0); // set size later (when we know it)
     m_uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
     
-    // Create Pipeline
+    // Create Pipelines
+    // Triangle Pipeline 
     m_srb = rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_srb->setBindings({
@@ -331,10 +331,15 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
     }
 
     //Update Buffers
-    if(m_updateGeometry) // we will update only when a step is done
+    if(m_needUpdatePositions) // true when a new step is done
     {
-        updateVertexBuffer(batch);
+        updateVertexBuffer(batch); 
+        m_needUpdatePositions = false;
+    }
+    if (m_needUpdateTopology) // true when the topology has changed
+    {
         updateIndexBuffer(batch);
+        m_needUpdateTopology = false;
     }
     updateUniformBuffer(batch); //will be updated all the time (camera, light and no step)
 }

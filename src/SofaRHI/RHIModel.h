@@ -34,8 +34,6 @@ public:
     void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport);
 
 private:
-    bool m_bTopologyHasChanged;
-
     void internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent) override;
 
     void updateBuffers() override;
@@ -54,7 +52,8 @@ private:
     int m_triangleNumber;
     quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
 
-    bool m_updateGeometry = false;
+    bool m_needUpdatePositions = true;
+    bool m_needUpdateTopology = true;
 };
 
 } // namespace sofa::rhi

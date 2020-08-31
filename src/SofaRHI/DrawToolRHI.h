@@ -272,7 +272,9 @@ private:
     QRhiRenderPassDescriptorPtr m_rpDesc;
     bool m_bHasInit = false;
 
-    QRhiGraphicsPipeline* m_pipeline;
+    QRhiGraphicsPipeline* m_trianglePipeline;
+    QRhiGraphicsPipeline* m_edgePipeline;
+    QRhiGraphicsPipeline* m_pointPipeline;
     QRhiShaderResourceBindings* m_srb;
     QRhiBuffer* m_uniformBuffer;
     QRhiBuffer* m_vertexPositionBuffer;
