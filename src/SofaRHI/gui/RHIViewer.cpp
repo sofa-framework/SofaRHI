@@ -121,7 +121,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     
     m_window = new QWindow();
 
-    //s_keyGgraphicsAPI = "mtl";
+    //s_keyGgraphicsAPI = "ogl";
+    s_keyGgraphicsAPI = "d3d";
 
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
@@ -157,11 +158,14 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
 #if QT_CONFIG(vulkan)
     if (graphicsAPI == QRhi::Vulkan)
     {
+        // Vulkan setup.
+        QVulkanInstance inst;
+        inst.create();
         m_window->setSurfaceType(QSurface::VulkanSurface);
         QRhiVulkanInitParams vulkanInitParams;
-        vulkanInitParams.inst = vulkanInstance();
+        vulkanInitParams.inst = m_window->vulkanInstance();
         vulkanInitParams.window = m_window;
-        m_window->setVulkanInstance(&vulkanInstance);
+        m_window->setVulkanInstance(&inst);
         msg_info("RHIViewer") << "Will use Vulkan";
     }
 #endif // QT_CONFIG(vulkan)

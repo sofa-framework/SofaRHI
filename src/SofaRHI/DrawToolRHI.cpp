@@ -17,14 +17,14 @@ void DrawToolRHI::initRHI()
     //create buffers (large enough to try to not resize them if necessary)
     m_vertexPositionBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, INITIAL_VERTEX_BUFFER_SIZE);
     m_indexTriangleBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, INITIAL_INDEX_BUFFER_SIZE);
-    m_uniformBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
+    m_cameraUniformBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
 
     // Create Pipelines
     // Triangle Pipeline 
     m_srb = m_rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_srb->setBindings({
-                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_uniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
         });
     if (!m_srb->build())
     {
@@ -113,10 +113,10 @@ void DrawToolRHI::beginFrame(core::visual::VisualParams* vparams, QRhiResourceUp
 
     const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
     const QMatrix4x4 mvpMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
-    m_currentRUB->updateDynamicBuffer(m_uniformBuffer, 0, utils::MATRIX4_SIZE, mvpMatrix.constData());
-    m_currentRUB->updateDynamicBuffer(m_uniformBuffer, utils::MATRIX4_SIZE, utils::VEC3_SIZE, cameraPosition.data());
+    m_currentRUB->updateDynamicBuffer(m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE, mvpMatrix.constData());
+    m_currentRUB->updateDynamicBuffer(m_cameraUniformBuffer, utils::MATRIX4_SIZE, utils::VEC3_SIZE, cameraPosition.data());
 
-    if (!m_uniformBuffer->build())
+    if (!m_cameraUniformBuffer->build())
     {
         msg_error("DrawToolRHI") << "Problem while building uniform buffer";
     }

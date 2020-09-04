@@ -276,7 +276,8 @@ private:
     QRhiGraphicsPipeline* m_edgePipeline;
     QRhiGraphicsPipeline* m_pointPipeline;
     QRhiShaderResourceBindings* m_srb;
-    QRhiBuffer* m_uniformBuffer;
+    QRhiBuffer* m_cameraUniformBuffer;
+    QRhiBuffer* m_materialUniformBuffer;
     QRhiBuffer* m_vertexPositionBuffer;
     QRhiBuffer* m_indexTriangleBuffer;
     QMatrix4x4 m_correctionMatrix;

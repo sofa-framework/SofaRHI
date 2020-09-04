@@ -3,6 +3,7 @@
 #include <SofaRHI/config.h>
 
 #include <SofaRHI/RHIVisualModel.h>
+#include <SofaRHI/RHIUtils.h>
 #include <SofaBaseVisual/VisualModelImpl.h>
 #include <sofa/core/DataTracker.h>
 
@@ -38,22 +39,30 @@ private:
 
     void updateBuffers() override;
 
-    void updateVertexBuffer(QRhiResourceUpdateBatch* batch);
+    void updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateGroupInfo = false);
     void updateIndexBuffer(QRhiResourceUpdateBatch* batch);
-    void updateUniformBuffer(QRhiResourceUpdateBatch* batch);
+    void updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch);
+    void updateMaterialUniformBuffer(QRhiResourceUpdateBatch* batch);
+    
+    QRhiGraphicsPipeline* m_pipeline = nullptr;
+    QRhiShaderResourceBindings* m_srb = nullptr;
+    //Uniform buffers
+    QRhiBuffer* m_cameraUniformBuffer = nullptr;
+    QRhiBuffer* m_materialsUniformBuffer = nullptr;
+    //Dynamic buffers
+    QRhiBuffer* m_vertexPositionBuffer = nullptr;
+    QRhiBuffer* m_indexTriangleBuffer = nullptr;
+    QRhiBuffer* m_indexEdgeBuffer = nullptr;
 
-    QRhiGraphicsPipeline* m_pipeline;
-    QRhiShaderResourceBindings* m_srb;
-    QRhiBuffer* m_uniformBuffer;
-    QRhiBuffer* m_vertexPositionBuffer;
-    QRhiBuffer* m_indexTriangleBuffer;
     QMatrix4x4 m_correctionMatrix;
 
-    int m_triangleNumber;
-    quint32 m_positionsBufferSize, m_normalsBufferSize, m_textureCoordsBufferSize;
+    int m_triangleNumber = 0;
+    int m_quadTriangleNumber = 0;
+    quint32 m_positionsBufferSize = 0, m_normalsBufferSize = 0, m_textureCoordsBufferSize = 0, m_materialIDBufferSize = 0;
 
     bool m_needUpdatePositions = true;
     bool m_needUpdateTopology = true;
+    bool m_needUpdateMaterial = true;
 };
 
 } // namespace sofa::rhi
