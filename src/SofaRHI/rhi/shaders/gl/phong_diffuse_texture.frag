@@ -12,7 +12,6 @@ struct Material {
 layout(location = 0) in vec3 out_world_position;
 layout(location = 1) in vec3 out_normal;
 layout(location = 2) in vec2 out_uv;
-layout(location = 3) in flat int out_materialID;
 
 layout(location = 0) out vec4 frag_color;
 

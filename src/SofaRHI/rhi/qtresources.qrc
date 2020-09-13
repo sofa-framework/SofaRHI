@@ -7,7 +7,6 @@
         <file>shaders/gl/phong.frag.qsb</file>
 		<file>shaders/gl/phong_color.vert.qsb</file>
         <file>shaders/gl/phong_color.frag.qsb</file>
-		<file>shaders/gl/phong_diffuse_texture.vert.qsb</file>
         <file>shaders/gl/phong_diffuse_texture.frag.qsb</file>
     </qresource>
 </RCC>

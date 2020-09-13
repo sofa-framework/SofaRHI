@@ -186,7 +186,7 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
     //std::cout << "4 * sizeof(float) " << 4 * sizeof(float) << std::endl;
     //std::cout << "ubufAlignment " << secondUbufOffset << std::endl;
     m_pipeline = rhi->newGraphicsPipeline();
-    QShader vs = utils::loadShader(":/shaders/gl/phong_diffuse_texture.vert.qsb");
+    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb");
     QShader fs = utils::loadShader(":/shaders/gl/phong_diffuse_texture.frag.qsb");
     if (!vs.isValid())
     {
