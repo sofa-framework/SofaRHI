@@ -22,7 +22,7 @@ namespace sofa::rhi::utils
     };
 
     //as defined in the shader files
-    struct Material
+    struct PhongMaterial
     {
         std::array<float, 4> ambient;
         std::array<float, 4> diffuse;
@@ -38,7 +38,7 @@ namespace sofa::rhi::utils
     //Definitions
     constexpr std::size_t MATRIX4_SIZE{ 64 };
     constexpr std::size_t VEC3_SIZE{ 12 };
-    constexpr std::size_t MATERIAL_SIZE = sizeof(Material);
+    constexpr std::size_t PHONG_MATERIAL_SIZE = sizeof(PhongMaterial);
     constexpr std::size_t MAXIMUM_MATERIAL_NUMBER{ 9 }; //
     constexpr std::size_t GROUPINFO_SIZE = sizeof(GroupInfo);
 

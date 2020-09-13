@@ -39,7 +39,20 @@ public:
     using QRhiResourceUpdateBatchPtr = std::shared_ptr<QRhiResourceUpdateBatch>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
     using LoaderMaterial = sofa::core::loader::Material;
+
+    RHIRendering(const RHIGroup& group)
+        : m_rhigroup(group)
+    {}
+
+    virtual bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial) = 0;
+    virtual void updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial) = 0;
+    virtual void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings) = 0;
+
+    int getMaterialID() const { return m_rhigroup.m_group.materialId; }
 protected:
+    RHIGroup m_rhigroup;
+    QRhiGraphicsPipeline* m_pipeline = nullptr;
+    QRhiShaderResourceBindings* m_srb = nullptr;
     //Uniform buffers
     QRhiBuffer* m_materialBuffer = nullptr;
 };
@@ -47,18 +60,34 @@ protected:
 class RHIPhongGroup : public RHIRendering
 {
 public:
-    RHIPhongGroup(const RHIGroup& group);
+    RHIPhongGroup(const RHIGroup& group)
+        : RHIRendering(group)
+    {}
 
-    bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial);
-    void updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial);
-    void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings);
+    bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial) override;
+    void updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial) override;
+    void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings) override;
+};
 
-    int getMaterialID() const { return m_rhigroup.m_group.materialId; }
+class RHIDiffuseTexturedPhongGroup : public RHIRendering
+{
+public:
+    RHIDiffuseTexturedPhongGroup(const RHIGroup& group)
+        : RHIRendering(group)
+    {}
+
+    bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial) override;
+    void updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial) override;
+    void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings) override;
+
 private:
-    RHIGroup m_rhigroup;
-    QRhiGraphicsPipeline* m_pipeline = nullptr;
-    QRhiShaderResourceBindings* m_srb = nullptr;
+    //TODO: parameter or anything
+    bool m_bMipMap = false;
+    bool m_bAutoGenMipMap = false;
 
+    QImage m_diffuseImage;
+    QRhiTexture* m_diffuseTexture;
+    QRhiSampler* m_diffuseSampler;
 };
 
 class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIVisualModel
@@ -109,7 +138,7 @@ private:
     bool m_needUpdateTopology = true;
     bool m_needUpdateMaterial = true;
 
-    std::vector<std::shared_ptr<RHIPhongGroup> > m_phongGroups;
+    std::vector<std::shared_ptr<RHIRendering> > m_renderGroups;
 };
 
 } // namespace sofa::rhi
