@@ -7,7 +7,6 @@ struct Material {
     vec4 diffuse;
     vec4 specular;
     vec4 shininess;
-    int flags;
 };
 
 layout(location = 0) in vec3 out_world_position;
@@ -25,12 +24,12 @@ layout(std140, binding = 0) uniform CameraUniform
 
 layout(std140, binding = 1) uniform MaterialUniform 
 {
-    Material materials[MAX_MATERIALS];
+    Material material;
 } u_materialbuf;
 
 void main()
 {
-	Material material = u_materialbuf.materials[out_materialID];
+	Material material = u_materialbuf.material;
 
 	// needed as uniform
 	vec3 light_pos = vec3(0.0, 0.0, 10.0);

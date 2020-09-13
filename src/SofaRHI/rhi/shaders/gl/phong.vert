@@ -7,7 +7,6 @@ struct Material {
     vec4 diffuse;
     vec4 specular;
     vec4 shininess;
-    int flags;
 };
 
 layout(location = 0) in vec4 position;
@@ -28,7 +27,7 @@ layout(std140, binding = 0) uniform CameraUniform
 
 layout(std140, binding = 1) uniform MaterialUniform 
 {
-    Material material[MAX_MATERIALS];
+    Material material;
 
 } u_materialbuf;
 

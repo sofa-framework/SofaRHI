@@ -16,6 +16,131 @@ using sofa::defaulttype::RGBAColor;
 using namespace sofa;
 using namespace sofa::component::visualmodel;
 
+///// RHI Mesh
+RHIGroup::RHIGroup(const FaceGroup& g, const utils::BufferInfo& bufferInfo)
+    : m_group(g)
+    , m_bufferInfo(bufferInfo)
+{
+
+}
+
+//bool RHIGroup::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
+//{
+//
+//}
+//
+//void RHIGroup::updateRHIResources(QRhiResourceUpdateBatch* batch)
+//{
+//
+//}
+
+void RHIGroup::addDrawCommand(QRhiCommandBuffer* cb, const QRhiCommandBuffer::VertexInput* vbindings)
+{
+    cb->setVertexInput(0, 3, vbindings, m_bufferInfo.buffer, m_bufferInfo.offset, QRhiCommandBuffer::IndexUInt32);
+    cb->drawIndexed(m_bufferInfo.size * 3);
+}
+
+///// RHI Phong Group
+RHIPhongGroup::RHIPhongGroup(const RHIGroup& group)
+    : m_rhigroup(group)
+{
+
+}
+
+bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
+{
+    m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATERIAL_SIZE);
+
+    m_srb = rhi->newShaderResourceBindings();
+    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+    std::vector<QRhiShaderResourceBinding> wholeBindings;
+    wholeBindings.resize(globalBindings.size());
+    std::copy(globalBindings.begin(), globalBindings.end(), wholeBindings.begin());
+    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), commonVisibility, m_materialBuffer, 0, utils::MATERIAL_SIZE));
+    m_srb->setBindings(wholeBindings.begin(), wholeBindings.end());
+
+    if (!m_srb->build())
+    {
+        msg_error("RHIPhongGroup") << "Problem while building srb";
+        return false;
+    }
+
+    // Triangle Pipeline 
+    //const int secondUbufOffset = rhi->ubufAligned(4 * sizeof(float));
+    //std::cout << "4 * sizeof(float) " << 4 * sizeof(float) << std::endl;
+    //std::cout << "ubufAlignment " << secondUbufOffset << std::endl;
+    m_pipeline = rhi->newGraphicsPipeline();
+    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb");
+    QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
+    if (!vs.isValid())
+    {
+        msg_error("RHIPhongGroup") << "Problem while vs shader";
+        return false;
+    }
+    if (!fs.isValid())
+    {
+        msg_error("RHIPhongGroup") << "Problem while fs shader";
+        return false;
+    }
+
+    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({
+        { 3 * sizeof(float) } ,
+        { 3 * sizeof(float) } ,
+        { 2 * sizeof(float) } ,
+        { 1 * sizeof(uint8_t) }
+        }); // 3 floats vertex + 3 floats normal + 2 floats uv
+    inputLayout.setAttributes({
+        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+        { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 },
+        { 3, 3, QRhiVertexInputAttribute::UNormByte, 0 }
+        });
+    m_pipeline->setVertexInputLayout(inputLayout);
+    m_pipeline->setShaderResourceBindings(m_srb);
+    m_pipeline->setRenderPassDescriptor(rpDesc.get());
+    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
+    m_pipeline->setDepthTest(true);
+    m_pipeline->setDepthWrite(true);
+    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_pipeline->setStencilTest(false);
+    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+
+    if (!m_pipeline->build())
+    {
+        msg_error("RHIPhongGroup") << "Problem while building pipeline";
+        return false;
+    }
+
+}
+void RHIPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
+{
+    utils::Material material = {
+            { loaderMaterial.ambient.r(), loaderMaterial.ambient.g(),loaderMaterial.ambient.b(), loaderMaterial.ambient.a()},
+            { loaderMaterial.diffuse.r(), loaderMaterial.diffuse.g(),loaderMaterial.diffuse.b(), loaderMaterial.diffuse.a()},
+            { loaderMaterial.specular.r(), loaderMaterial.specular.g(),loaderMaterial.specular.b(), loaderMaterial.specular.a()},
+            { loaderMaterial.shininess, 0.0f , 0.0f, 0.0f}
+    };
+
+    batch->updateDynamicBuffer(m_materialBuffer, 0, utils::MATERIAL_SIZE, &material);
+
+    if (!m_materialBuffer->build())
+    {
+        msg_error("RHIPhongGroup") << "Problem while building material uniform buffer";
+    }
+}
+void RHIPhongGroup::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings)
+{
+    //Create commands
+    cb->setGraphicsPipeline(m_pipeline);
+    cb->setShaderResources();
+    cb->setViewport(viewport);
+
+    m_rhigroup.addDrawCommand(cb, vbindings);
+}
+
+///// RHI Model
 RHIModel::RHIModel()
     : InheritedVisual()
 {
@@ -44,7 +169,7 @@ void RHIModel::initVisual()
 
     QRhiPtr rhi = rhiDrawTool->getRHI();
     QRhiRenderPassDescriptorPtr rpDesc = rhiDrawTool->getRenderPassDescriptor();
-    if (!initRHI(rhi, rpDesc))
+    if (!initRHIResources(rhi, rpDesc))
     {
         msg_error() << "Error while initializing RHI features";
         return;
@@ -168,63 +293,20 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
 
     int textureCoordsBufferSize = int(vtexcoords.size() * sizeof(vtexcoords[0]));
 
-    //TODO: check if it is reasonable to store materialID per vertex
-    //first idea was to have an uniform value and update it when drawing each group
-    //but dont know if possible/good...
-    //for now it seems really not optimized...
-    std::vector<uint8_t> materialIDs;
-    materialIDs.resize(vertices.size());
-    int materialIDBufferSize = int(materialIDs.size() * sizeof(materialIDs[0]));
-    if (updateAll)
-    {
-        const auto& groups = this->groups.getValue();
-        if (groups.size() == 0)
-        {
-            std::fill(materialIDs.begin(), materialIDs.end(), 0);
-        }
-        else
-        {
-            const auto& edges = this->getEdges();
-            const auto& triangles = this->getTriangles();
-            const auto& quads = this->getQuads();
-            for (const auto& g : groups)
-            {
-                //edge
-                for (std::size_t i = g.edge0; i < g.nbe; i++)
-                {
-                    for(std::size_t j = 0; i < 2; j++)
-                        materialIDs[edges[i][j]] = g.materialId + 1;
-                }
-                for (std::size_t i = g.tri0; i < g.nbt; i++)
-                {
-                    for (std::size_t j = 0; i < 3; j++)
-                        materialIDs[triangles[i][j]] = g.materialId + 1;
-                }
-                for (std::size_t i = g.quad0; i < g.nbq; i++)
-                {
-                    for (std::size_t j = 0; i < 4; j++)
-                        materialIDs[quads[i][j]] = g.materialId + 1;
-                }
-            }
-        }
-    }
-
     //2 cases: or we update everything on the GPU
     // or the mesh just moves and just needs to update position-related data
     if(updateAll || m_vertexPositionBuffer->size() == 0)
     {
-        m_vertexPositionBuffer->setSize(positionsBufferSize + normalsBufferSize + textureCoordsBufferSize + materialIDBufferSize);
+        m_vertexPositionBuffer->setSize(positionsBufferSize + normalsBufferSize + textureCoordsBufferSize);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, 0, positionsBufferSize, ptrVertices);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize, normalsBufferSize, ptrNormals);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize + normalsBufferSize, textureCoordsBufferSize, vtexcoords.data());
-        batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize + normalsBufferSize + textureCoordsBufferSize, materialIDBufferSize, materialIDs.data());
     }
     else
     {
         //assert that the size is good, etc
         batch->updateDynamicBuffer(m_vertexPositionBuffer, 0, positionsBufferSize, ptrVertices);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize, normalsBufferSize, ptrNormals);
-
     }
 
     if (!m_vertexPositionBuffer->build())
@@ -235,7 +317,6 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
     m_positionsBufferSize = positionsBufferSize;
     m_normalsBufferSize = normalsBufferSize;
     m_textureCoordsBufferSize = textureCoordsBufferSize;
-    m_materialIDBufferSize = materialIDBufferSize;
 }
 
 void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
@@ -295,63 +376,7 @@ void RHIModel::updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch)
     }
 }
 
-// Dont know how to push an array of struct into an uniform buffer!
-void RHIModel::updateMaterialUniformBuffer(QRhiResourceUpdateBatch* batch)
-{
-
-    // Materials
-    const auto& materials = this->materials.getValue();
-    if (materials.size() > utils::MAXIMUM_MATERIAL_NUMBER)
-    {
-        msg_warning() << "Too many material defined, will only use " << utils::MAXIMUM_MATERIAL_NUMBER << " instead of " << materials.size();
-    }
-
-    utils::MaterialFlags flags = utils::MaterialFlags::NONE;
-    std::vector<utils::Material> materialsToPush;
-    //first one is the default/pullback material
-    const auto& material = this->material.getValue();
-    if (material.useTexture)
-    {
-        flags = utils::MaterialFlags::USE_DIFFUSE_TEXTURE;
-    }
-    materialsToPush.push_back({
-            { material.ambient.r(), material.ambient.g(),material.ambient.b(), material.ambient.a()},
-            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b(), material.diffuse.a()},
-            { material.specular.r(), material.specular.g(),material.specular.b(), material.specular.a()},
-            { material.shininess, 0.0f , 0.0f, 0.0f},
-            flags }
-    );
-     
-    //push the other one if it exists
-    for(const auto& material: this->materials.getValue())
-    {
-        utils::MaterialFlags flags = utils::MaterialFlags::NONE;
-        if (material.useTexture)
-        {
-            flags = utils::MaterialFlags::USE_DIFFUSE_TEXTURE;
-        }
-
-        materialsToPush.push_back({
-            { material.ambient.r(), material.ambient.g(),material.ambient.b(), material.ambient.a()},
-            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b(), material.diffuse.a()},
-            { material.specular.r(), material.specular.g(),material.specular.b(), material.specular.a()},
-            { material.shininess, 0.0f , 0.0f, 0.0f},
-            flags }
-        );
-    }
-    materialsToPush.resize(1);
-
-
-    //std::array<float, 4> diffuse = { 1.0f, 0.0f, 1.0f, 1.0f };
-    batch->updateDynamicBuffer(m_materialsUniformBuffer, 0, utils::MAXIMUM_MATERIAL_NUMBER * utils::MATERIAL_SIZE, materialsToPush.data());
-    
-    if (!m_materialsUniformBuffer->build())
-    {
-        msg_error() << "Problem while building material uniform buffer";
-    }
-}
-
-bool RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
+bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
 {
     const VecCoord& vertices = this->getVertices();
     const VecDeriv& vnormals = this->getVnormals();
@@ -361,67 +386,72 @@ bool RHIModel::initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     m_vertexPositionBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, 0); // set size later (when we know it)
     m_indexTriangleBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, 0); // set size later (when we know it)
     m_cameraUniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
-    m_materialsUniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MAXIMUM_MATERIAL_NUMBER * utils::MATERIAL_SIZE);
     
-    // Create Pipelines
-    // Triangle Pipeline 
-    //const int secondUbufOffset = rhi->ubufAligned(4 * sizeof(float));
-    //std::cout << "4 * sizeof(float) " << 4 * sizeof(float) << std::endl;
-    //std::cout << "ubufAlignment " << secondUbufOffset << std::endl;
-    m_srb = rhi->newShaderResourceBindings();
+    std::vector<QRhiShaderResourceBinding> globalBindings;
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
-    m_srb->setBindings({
-                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE),
-                         QRhiShaderResourceBinding::uniformBuffer(1, commonVisibility, m_materialsUniformBuffer, 0,  utils::MAXIMUM_MATERIAL_NUMBER * utils::MATERIAL_SIZE)
-        });
-    if (!m_srb->build())
+    globalBindings.push_back({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
+        }
+    );
+
+    // Create groups and their respective renderings
+    const auto& groups = this->groups.getValue();
+    const auto& triangles = this->getTriangles();
+    const auto& quads = this->getQuads();
+
+    if (groups.size() == 0)
     {
-        msg_error() << "Problem while building srb";
-        return false;
+
+        FaceGroup defaultGroup;
+        utils::BufferInfo bufferInfo;
+
+        if (triangles.size() > 0)
+        {
+            bufferInfo.buffer = m_indexTriangleBuffer;
+            bufferInfo.offset = 0;
+            bufferInfo.size = triangles.size();
+        }
+        if (quads.size() > 0)
+        {
+            bufferInfo.buffer = m_indexTriangleBuffer;
+            bufferInfo.offset = triangles.size();
+            bufferInfo.size = quads.size() * 2; //2 triangles for each quad
+        }
+
+        m_phongGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(defaultGroup, bufferInfo)));
+    }
+    else
+    {
+        for (const auto& group : groups)
+        {
+            utils::BufferInfo bufferInfo;
+            if (group.nbt > 0)
+            {
+                bufferInfo.buffer = m_indexTriangleBuffer;
+                bufferInfo.offset = group.tri0;
+                bufferInfo.size = group.nbt;
+            }
+            if (group.nbq > 0)
+            {
+                bufferInfo.buffer = m_indexTriangleBuffer;
+                bufferInfo.offset = triangles.size() + group.quad0 * 2; //2 triangles for each quad
+                bufferInfo.size = group.nbq * 2;
+            }
+            m_phongGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(group, bufferInfo)));
+        }
     }
 
-    m_pipeline = rhi->newGraphicsPipeline();
-    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb");
-    QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
-    if (!vs.isValid())
+    for (auto& phongGroup : m_phongGroups)
     {
-        msg_error() << "Problem while vs shader";
-        return false;
-    }
-    if (!fs.isValid())
-    {
-        msg_error() << "Problem while fs shader";
-        return false;
-    }
+        const int materialID = phongGroup->getMaterialID();
+        auto loaderMaterial = this->material.getValue();
+        if (materialID >= 0)
+        {
+            const auto& materials = this->materials.getValue();
+            loaderMaterial = materials[materialID];
+        }
 
-    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
-    QRhiVertexInputLayout inputLayout;
-    inputLayout.setBindings({ 
-        { 3 * sizeof(float) } , 
-        { 3 * sizeof(float) } , 
-        { 2 * sizeof(float) } ,
-        { 1 * sizeof(uint8_t) }
-    }); // 3 floats vertex + 3 floats normal + 2 floats uv
-    inputLayout.setAttributes({ 
-        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
-        { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
-        { 2, 2, QRhiVertexInputAttribute::Float2, 0 },
-        { 3, 3, QRhiVertexInputAttribute::UNormByte, 0 }
-    });
-    m_pipeline->setVertexInputLayout(inputLayout);
-    m_pipeline->setShaderResourceBindings(m_srb);
-    m_pipeline->setRenderPassDescriptor(rpDesc.get());
-    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    m_pipeline->setDepthTest(true);
-    m_pipeline->setDepthWrite(true);
-    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_pipeline->setStencilTest(false);
-    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
-    
-    if (!m_pipeline->build())
-    {
-        msg_error() << "Problem while building pipeline";
-        return false;
+        phongGroup->initRHIResources(rhi, rpDesc, globalBindings, loaderMaterial);
     }
 
     // SOFA gives a projection matrix for OpenGL system
@@ -440,6 +470,9 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
         return;
     }
 
+    //will be updated all the time (camera, light and no step)
+    updateCameraUniformBuffer(batch);
+
     //Update Buffers (on demand)
     if(m_needUpdatePositions) // true when a new step is done
     {
@@ -451,14 +484,24 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
         updateIndexBuffer(batch);
         m_needUpdateTopology = false;
     }
+
     if (m_needUpdateMaterial)
     {
-        updateMaterialUniformBuffer(batch);
+        for (auto& phongGroup : m_phongGroups)
+        {
+            const int materialID = phongGroup->getMaterialID();
+            auto loaderMaterial = this->material.getValue();
+            if (materialID >= 0)
+            {
+                const auto& materials = this->materials.getValue();
+                loaderMaterial = materials[materialID];
+            }
+
+            phongGroup->updateRHIResources(batch, loaderMaterial);
+        }
+
         m_needUpdateMaterial = false;
     }
-    //will be updated all the time (camera, light and no step)
-    updateCameraUniformBuffer(batch); 
-
 }
 
 void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
@@ -466,47 +509,17 @@ void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& view
     if (m_vertexPositionBuffer == nullptr)
     {
         return;
-    }    
+    } 
 
-    //Create commands
-    cb->setGraphicsPipeline(m_pipeline);
-    cb->setShaderResources();
-    cb->setViewport(viewport);
     const QRhiCommandBuffer::VertexInput vbindings[] = {
         { m_vertexPositionBuffer, quint32(0) },
         { m_vertexPositionBuffer, quint32(m_positionsBufferSize) },
         { m_vertexPositionBuffer, quint32(m_positionsBufferSize + m_normalsBufferSize) }
     };
-    const auto& groups = this->groups.getValue();
-    if (groups.size() == 0)
+
+    for (auto& phongGroup : m_phongGroups)
     {
-        if (m_triangleNumber > 0)
-        {
-            cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer,0, QRhiCommandBuffer::IndexUInt32);
-            cb->drawIndexed(m_triangleNumber * 3);
-        }
-        if (m_quadTriangleNumber > 0)
-        {
-            cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer, m_triangleNumber, QRhiCommandBuffer::IndexUInt32);
-            cb->drawIndexed(m_quadTriangleNumber * 3);
-        }
-    }
-    else
-    {
-        for (const auto& group : groups)
-        {
-            if (group.nbt > 0)
-            {
-                cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer, group.tri0, QRhiCommandBuffer::IndexUInt32);
-                cb->drawIndexed(group.nbt * 3);
-            }
-            if (group.nbq > 0)
-            {
-                //2 triangles for each quad
-                cb->setVertexInput(0, 3, vbindings, m_indexTriangleBuffer, m_triangleNumber + group.quad0 * 2, QRhiCommandBuffer::IndexUInt32);
-                cb->drawIndexed(group.nbq * 2 * 3);
-            }
-        }
+        phongGroup->updateRHICommands(cb, viewport, vbindings);
     }
 
 }

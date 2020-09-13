@@ -7,14 +7,18 @@
 
 namespace sofa::rhi::utils
 {
-    enum class MaterialFlags : int
+    enum class PrimitiveType : int
     {
-        NONE = 0,
-        USE_PHONG = 1 << 0,
-        USE_DIFFUSE_TEXTURE = 1 << 1,
-        USE_BUMP_TEXTURE = 1 << 2,
-        UNUSED_1 = 1 << 3
-        //etc
+        POINT = 0,
+        LINE = 1,
+        TRIANGLE = 2,
+    };
+
+    struct BufferInfo
+    {
+        QRhiBuffer* buffer;
+        int offset;
+        int size;
     };
 
     //as defined in the shader files
@@ -24,7 +28,6 @@ namespace sofa::rhi::utils
         std::array<float, 4> diffuse;
         std::array<float, 4> specular;
         std::array<float, 4> shininess;// 3 padding of float;
-        MaterialFlags flags;
     };
 
     struct GroupInfo
