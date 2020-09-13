@@ -7,13 +7,24 @@
 
 namespace sofa::rhi::utils
 {
+    enum class MaterialFlags : int
+    {
+        NONE = 0,
+        USE_PHONG = 1 << 0,
+        USE_DIFFUSE_TEXTURE = 1 << 1,
+        USE_BUMP_TEXTURE = 1 << 2,
+        UNUSED_1 = 1 << 3
+        //etc
+    };
+
     //as defined in the shader files
     struct Material
     {
-        std::array<float, 3> ambient;
-        std::array<float, 3> diffuse;
-        std::array<float, 3> specular;
-        float shininess;
+        std::array<float, 4> ambient;
+        std::array<float, 4> diffuse;
+        std::array<float, 4> specular;
+        std::array<float, 4> shininess;// 3 padding of float;
+        MaterialFlags flags;
     };
 
     struct GroupInfo

@@ -306,24 +306,37 @@ void RHIModel::updateMaterialUniformBuffer(QRhiResourceUpdateBatch* batch)
         msg_warning() << "Too many material defined, will only use " << utils::MAXIMUM_MATERIAL_NUMBER << " instead of " << materials.size();
     }
 
+    utils::MaterialFlags flags = utils::MaterialFlags::NONE;
     std::vector<utils::Material> materialsToPush;
     //first one is the default/pullback material
     const auto& material = this->material.getValue();
+    if (material.useTexture)
+    {
+        flags = utils::MaterialFlags::USE_DIFFUSE_TEXTURE;
+    }
     materialsToPush.push_back({
-            { material.ambient.r(), material.ambient.g(),material.ambient.b()},
-            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b()},
-            { material.specular.r(), material.specular.g(),material.specular.b()},
-            material.shininess }
+            { material.ambient.r(), material.ambient.g(),material.ambient.b(), material.ambient.a()},
+            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b(), material.diffuse.a()},
+            { material.specular.r(), material.specular.g(),material.specular.b(), material.specular.a()},
+            { material.shininess, 0.0f , 0.0f, 0.0f},
+            flags }
     );
-
+     
     //push the other one if it exists
     for(const auto& material: this->materials.getValue())
     {
+        utils::MaterialFlags flags = utils::MaterialFlags::NONE;
+        if (material.useTexture)
+        {
+            flags = utils::MaterialFlags::USE_DIFFUSE_TEXTURE;
+        }
+
         materialsToPush.push_back({
-            { material.ambient.r(), material.ambient.g(),material.ambient.b()},
-            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b()},
-            { material.specular.r(), material.specular.g(),material.specular.b()},
-            material.shininess }
+            { material.ambient.r(), material.ambient.g(),material.ambient.b(), material.ambient.a()},
+            { material.diffuse.r(), material.diffuse.g(),material.diffuse.b(), material.diffuse.a()},
+            { material.specular.r(), material.specular.g(),material.specular.b(), material.specular.a()},
+            { material.shininess, 0.0f , 0.0f, 0.0f},
+            flags }
         );
     }
     materialsToPush.resize(1);

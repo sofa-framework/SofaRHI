@@ -10,6 +10,8 @@
 #include <QtGui/private/qrhi_p.h>
 #include <QFile>
 
+class QImage;
+
 namespace sofa::rhi
 {
 
@@ -59,6 +61,7 @@ private:
     int m_triangleNumber = 0;
     int m_quadTriangleNumber = 0;
     quint32 m_positionsBufferSize = 0, m_normalsBufferSize = 0, m_textureCoordsBufferSize = 0, m_materialIDBufferSize = 0;
+    std::vector<QImage*> m_diffuseTextures; //each material has a diffuse texture (empty if not using it)
 
     bool m_needUpdatePositions = true;
     bool m_needUpdateTopology = true;

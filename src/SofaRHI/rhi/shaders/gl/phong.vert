@@ -3,10 +3,11 @@
 #define MAX_MATERIALS 10
 
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    float shininess;
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+    vec4 shininess;
+    int flags;
 };
 
 layout(location = 0) in vec4 position;
