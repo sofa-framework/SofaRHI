@@ -26,10 +26,14 @@ layout(binding = 2) uniform sampler2D u_diffuseTexture;
 
 void main()
 {
+	vec4 diffusePart = texture(u_diffuseTexture, out_uv);
+	if(diffusePart.a < 0.0001) // cheap full transparency
+		discard;
+
 	// needed as uniform
-	vec3 light_pos = vec3(0.0, 0.0, 10.0);
+	vec3 light_pos = vec3(0.0, 30.0, 100.0);
 	vec3 light_color = vec3(1.0, 1.0, 1.0);
-	float shininess = 32.0;
+	float shininess = u_materialbuf.shininess[0];
 
 	// Ambient
     vec3 ambient = u_materialbuf.ambient.xyz * light_color;//ambient_strength * light_color;
@@ -38,7 +42,8 @@ void main()
 	vec3 norm = normalize(out_normal);
 	vec3 light_dir = normalize(light_pos - out_world_position);
 	float diff = max(dot(norm, light_dir), 0.0);
-	vec3 diffuse = texture(u_diffuseTexture, out_uv).xyz * diff * light_color;
+	vec3 diffuse = diffusePart.xyz * diff * light_color;
+
 
 	// Spec
 	vec3 view_dir = normalize(u_camerabuf.camera_position - out_world_position);
