@@ -17,9 +17,9 @@ using namespace sofa;
 using namespace sofa::component::visualmodel;
 
 ///// RHI Mesh
-RHIGroup::RHIGroup(const FaceGroup& g, const utils::BufferInfo& bufferInfo)
-    : m_group(g)
-    , m_bufferInfo(bufferInfo)
+RHIGroup::RHIGroup(const utils::BufferInfo& bufferInfo, int materialID)
+    : m_bufferInfo(bufferInfo)
+    , m_materialID(materialID)
 {
 
 }
@@ -528,61 +528,67 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     const auto& triangles = this->getTriangles();
     const auto& quads = this->getQuads();
 
+    //Split group with different primitives (into other groups)
     if (groups.size() == 0)
     {
         FaceGroup defaultGroup;
         utils::BufferInfo bufferInfo;
+        bool isTextured = this->texturename.isSet() || !this->texturename.getValue().empty();
 
         if (triangles.size() > 0)
         {
             bufferInfo.buffer = m_indexTriangleBuffer;
             bufferInfo.offset = 0;
             bufferInfo.size = triangles.size();
+
+            if(isTextured)
+                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+            else
+                m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+
         }
         if (quads.size() > 0)
         {
             bufferInfo.buffer = m_indexTriangleBuffer;
-            bufferInfo.offset = triangles.size();
+            bufferInfo.offset = triangles.size() * sizeof(triangles[0]);
             bufferInfo.size = quads.size() * 2; //2 triangles for each quad
-        }
 
-        if (this->texturename.isSet() || !this->texturename.getValue().empty())
-        {
-            m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(defaultGroup, bufferInfo)));
+            if (isTextured)
+                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+            else
+                m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
         }
-        else
-        {
-            m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(defaultGroup, bufferInfo)));
-        }
-
     }
     else
     {
         for (const auto& group : groups)
         {
-            utils::BufferInfo bufferInfo;
+            utils::BufferInfo bufferInfo; 
+            const auto& materials = this->materials.getValue();
+            auto loaderMaterial = materials[group.materialId];
+            bool isTextured = loaderMaterial.useTexture && !loaderMaterial.textureFilename.empty();
+
             if (group.nbt > 0)
             {
                 bufferInfo.buffer = m_indexTriangleBuffer;
-                bufferInfo.offset = group.tri0;
+                bufferInfo.offset = group.tri0 * sizeof(triangles[0]);
                 bufferInfo.size = group.nbt;
+
+                if (isTextured)
+                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                else
+                    m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
             }
             if (group.nbq > 0)
             {
                 bufferInfo.buffer = m_indexTriangleBuffer;
-                bufferInfo.offset = int(triangles.size()) + group.quad0 * 2; //2 triangles for each quad
+                bufferInfo.offset = int(triangles.size() * sizeof(triangles[0])) +  (2*group.quad0) * sizeof(triangles[0]); //2 triangles for each quad
                 bufferInfo.size = group.nbq * 2;
-            }
 
-            const auto& materials = this->materials.getValue();
-            auto loaderMaterial = materials[group.materialId];
-            if (loaderMaterial.useTexture && !loaderMaterial.textureFilename.empty())
-            {
-                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(group, bufferInfo)));
-            }
-            else
-            {
-                m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(group, bufferInfo)));
+                if (isTextured)
+                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                else
+                    m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
             }
         }
     }

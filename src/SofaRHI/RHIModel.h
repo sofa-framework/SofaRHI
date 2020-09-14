@@ -20,14 +20,15 @@ class RHIGroup
 public:
     using FaceGroup = sofa::component::visualmodel::VisualModelImpl::FaceGroup;
 
-    RHIGroup(const FaceGroup& g, const utils::BufferInfo& bufferInfo);
+    RHIGroup(const utils::BufferInfo& bufferInfo, int materialID);
 
     //bool initRHI(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) override;
     //void updateRHIResources(QRhiResourceUpdateBatch* batch) override;
     void addDrawCommand(QRhiCommandBuffer* cb, const QRhiCommandBuffer::VertexInput* vbindings);
 
-//private:
-    const FaceGroup m_group;
+    int getMaterialID() const { return m_materialID; }
+private:
+    int m_materialID;
     const utils::BufferInfo m_bufferInfo;
 };
 
@@ -48,7 +49,7 @@ public:
     virtual void updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial) = 0;
     virtual void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings) = 0;
 
-    int getMaterialID() const { return m_rhigroup.m_group.materialId; }
+    int getMaterialID() const { return m_rhigroup.getMaterialID(); }
 protected:
     RHIGroup m_rhigroup;
     QRhiGraphicsPipeline* m_pipeline = nullptr;
