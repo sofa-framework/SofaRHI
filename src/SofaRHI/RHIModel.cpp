@@ -430,17 +430,17 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
         batch->updateDynamicBuffer(m_vertexPositionBuffer, 0, positionsBufferSize, ptrVertices);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize, normalsBufferSize, ptrNormals);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize + normalsBufferSize, textureCoordsBufferSize, vtexcoords.data());
+        
+        if (!m_vertexPositionBuffer->build())
+        {
+            msg_error() << "Problem while building vertex buffer";
+        }
     }
     else
     {
         //assert that the size is good, etc
         batch->updateDynamicBuffer(m_vertexPositionBuffer, 0, positionsBufferSize, ptrVertices);
         batch->updateDynamicBuffer(m_vertexPositionBuffer, positionsBufferSize, normalsBufferSize, ptrNormals);
-    }
-
-    if (!m_vertexPositionBuffer->build())
-    {
-        msg_error() << "Problem while building vertex buffer";
     }
 
     m_positionsBufferSize = positionsBufferSize;
@@ -570,7 +570,7 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
             if (group.nbq > 0)
             {
                 bufferInfo.buffer = m_indexTriangleBuffer;
-                bufferInfo.offset = triangles.size() + group.quad0 * 2; //2 triangles for each quad
+                bufferInfo.offset = int(triangles.size()) + group.quad0 * 2; //2 triangles for each quad
                 bufferInfo.size = group.nbq * 2;
             }
 
