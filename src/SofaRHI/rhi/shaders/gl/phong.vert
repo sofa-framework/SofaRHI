@@ -39,5 +39,5 @@ void main()
     gl_Position = u_camerabuf.mvp_matrix * position;
     out_world_position = position.xyz;
     out_normal = normal;
-    out_uv = vec2(uv.x, uv.y);
+    out_uv = uv;
 }

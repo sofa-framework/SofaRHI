@@ -56,5 +56,4 @@ void main()
 
     vec3 res_color = ambient + diffuse + specular;
 	frag_color = vec4(res_color, 1.0f);
-    //frag_color = vec4(material.specular.xyz, 1.0) ;
 }

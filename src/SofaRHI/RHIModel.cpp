@@ -72,14 +72,12 @@ bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rp
     inputLayout.setBindings({
         { 3 * sizeof(float) } ,
         { 3 * sizeof(float) } ,
-        { 2 * sizeof(float) } ,
-        { 1 * sizeof(uint8_t) }
+        { 2 * sizeof(float) } 
         }); // 3 floats vertex + 3 floats normal + 2 floats uv
     inputLayout.setAttributes({
         { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
         { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
-        { 2, 2, QRhiVertexInputAttribute::Float2, 0 },
-        { 3, 3, QRhiVertexInputAttribute::UNormByte, 0 }
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 }
         });
     m_pipeline->setVertexInputLayout(inputLayout);
     m_pipeline->setShaderResourceBindings(m_srb);
@@ -143,6 +141,7 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
         msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while reading diffuse image " << textureFilename;
         return false;
     }
+    m_diffuseImage = m_diffuseImage.mirrored(false, true); // seems texcoord are upside down
     // create texture and sampler 
     QRhiTexture::Flags texFlags = 0;
     if (m_bMipMap)
@@ -204,14 +203,12 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
     inputLayout.setBindings({
         { 3 * sizeof(float) } ,
         { 3 * sizeof(float) } ,
-        { 2 * sizeof(float) } ,
-        { 1 * sizeof(uint8_t) }
+        { 2 * sizeof(float) }
         }); // 3 floats vertex + 3 floats normal + 2 floats uv
     inputLayout.setAttributes({
         { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
         { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
-        { 2, 2, QRhiVertexInputAttribute::Float2, 0 },
-        { 3, 3, QRhiVertexInputAttribute::UNormByte, 0 }
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 }
         });
     m_pipeline->setVertexInputLayout(inputLayout);
     m_pipeline->setShaderResourceBindings(m_srb);
