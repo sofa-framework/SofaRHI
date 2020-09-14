@@ -36,11 +36,10 @@ bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rp
     m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::PHONG_MATERIAL_SIZE);
 
     m_srb = rhi->newShaderResourceBindings();
-    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     std::vector<QRhiShaderResourceBinding> wholeBindings;
     wholeBindings.resize(globalBindings.size());
     std::copy(globalBindings.begin(), globalBindings.end(), wholeBindings.begin());
-    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), commonVisibility, m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE));
+    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), QRhiShaderResourceBinding::FragmentStage, m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE));
     m_srb->setBindings(wholeBindings.begin(), wholeBindings.end());
 
     if (!m_srb->build())
@@ -166,11 +165,10 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
     m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::PHONG_MATERIAL_SIZE);
 
     m_srb = rhi->newShaderResourceBindings();
-    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     std::vector<QRhiShaderResourceBinding> wholeBindings;
     wholeBindings.resize(globalBindings.size());
     std::copy(globalBindings.begin(), globalBindings.end(), wholeBindings.begin());
-    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), commonVisibility, m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE));
+    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), QRhiShaderResourceBinding::FragmentStage, m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE));
     wholeBindings.push_back(QRhiShaderResourceBinding::sampledTexture(globalBindings.size()+1, QRhiShaderResourceBinding::FragmentStage, m_diffuseTexture, m_diffuseSampler));
     m_srb->setBindings(wholeBindings.begin(), wholeBindings.end());
 

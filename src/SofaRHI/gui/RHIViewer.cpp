@@ -121,8 +121,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     
     m_window = new QWindow();
 
-    //s_keyGgraphicsAPI = "ogl";
-    s_keyGgraphicsAPI = "d3d";
+    s_keyGgraphicsAPI = "ogl";
+    //s_keyGgraphicsAPI = "d3d";
 
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
