@@ -31,7 +31,7 @@ void RHIGroup::addDrawCommand(QRhiCommandBuffer* cb, const QRhiCommandBuffer::Ve
 }
 
 ///// RHI Phong Group
-bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
+bool RHIPhongRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
 {
     m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::PHONG_MATERIAL_SIZE);
 
@@ -44,7 +44,7 @@ bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rp
 
     if (!m_srb->build())
     {
-        msg_error("RHIPhongGroup") << "Problem while building srb";
+        msg_error("RHIPhongRendering") << "Problem while building srb";
         return false;
     }
 
@@ -57,12 +57,12 @@ bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rp
     QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
     if (!vs.isValid())
     {
-        msg_error("RHIPhongGroup") << "Problem while vs shader";
+        msg_error("RHIPhongRendering") << "Problem while vs shader";
         return false;
     }
     if (!fs.isValid())
     {
-        msg_error("RHIPhongGroup") << "Problem while fs shader";
+        msg_error("RHIPhongRendering") << "Problem while fs shader";
         return false;
     }
 
@@ -90,12 +90,12 @@ bool RHIPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rp
 
     if (!m_pipeline->build())
     {
-        msg_error("RHIPhongGroup") << "Problem while building pipeline";
+        msg_error("RHIPhongRendering") << "Problem while building pipeline";
         return false;
     }
 
 }
-void RHIPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
+void RHIPhongRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
 {
     utils::PhongMaterial material = {
             { loaderMaterial.ambient.r(), loaderMaterial.ambient.g(),loaderMaterial.ambient.b(), loaderMaterial.ambient.a()},
@@ -108,36 +108,26 @@ void RHIPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* batch, const Loa
 
     if (!m_materialBuffer->build())
     {
-        msg_error("RHIPhongGroup") << "Problem while building material uniform buffer";
+        msg_error("RHIPhongRendering") << "Problem while building material uniform buffer";
     }
 }
-void RHIPhongGroup::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings)
-{
-    //Create commands
-    cb->setGraphicsPipeline(m_pipeline);
-    cb->setShaderResources();
-    cb->setViewport(viewport);
-
-    m_rhigroup.addDrawCommand(cb, vbindings);
-}
-
 
 ///// RHI Textured Phong Group
-bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
+bool RHIDiffuseTexturedPhongRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
 {
     //load image
     std::string textureFilename(loaderMaterial.textureFilename);
 
     if (!sofa::helper::system::DataRepository.findFile(textureFilename, "", nullptr))
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Could not find diffuse image " << loaderMaterial.textureFilename;
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Could not find diffuse image " << loaderMaterial.textureFilename;
         return false;
     }
 
     m_diffuseImage = QImage(QLatin1String(textureFilename.c_str())).convertToFormat(QImage::Format_RGBA8888);
     if (m_diffuseImage.isNull())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while reading diffuse image " << textureFilename;
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while reading diffuse image " << textureFilename;
         return false;
     }
     m_diffuseImage = m_diffuseImage.mirrored(false, true); // seems texcoord are upside down
@@ -151,20 +141,21 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
     m_diffuseTexture = rhi->newTexture(QRhiTexture::RGBA8, QSize(m_diffuseImage.width(), m_diffuseImage.height()), 1, texFlags);
     if (!m_diffuseTexture->build())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while building diffuse texture";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while building diffuse texture";
         return false;
     }
     m_diffuseSampler = rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, m_bMipMap ? QRhiSampler::Linear : QRhiSampler::None,
         QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge);
     if (!m_diffuseSampler->build())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while building diffuse sampler";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while building diffuse sampler";
         return false;
     }
     
     m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::PHONG_MATERIAL_SIZE);
 
     m_srb = rhi->newShaderResourceBindings();
+    const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     std::vector<QRhiShaderResourceBinding> wholeBindings;
     wholeBindings.resize(globalBindings.size());
     std::copy(globalBindings.begin(), globalBindings.end(), wholeBindings.begin());
@@ -174,7 +165,7 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
 
     if (!m_srb->build())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while building srb";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while building srb";
         return false;
     }
 
@@ -187,12 +178,12 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
     QShader fs = utils::loadShader(":/shaders/gl/phong_diffuse_texture.frag.qsb");
     if (!vs.isValid())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while vs shader";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while vs shader";
         return false;
     }
     if (!fs.isValid())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while fs shader";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while fs shader";
         return false;
     }
 
@@ -220,12 +211,12 @@ bool RHIDiffuseTexturedPhongGroup::initRHIResources(QRhiPtr rhi, QRhiRenderPassD
 
     if (!m_pipeline->build())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while building pipeline";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while building pipeline";
         return false;
     }
 
 }
-void RHIDiffuseTexturedPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
+void RHIDiffuseTexturedPhongRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
 {
     utils::PhongMaterial material = {
             { loaderMaterial.ambient.r(), loaderMaterial.ambient.g(),loaderMaterial.ambient.b(), loaderMaterial.ambient.a()},
@@ -238,7 +229,7 @@ void RHIDiffuseTexturedPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* b
 
     if (!m_materialBuffer->build())
     {
-        msg_error("RHIDiffuseTexturedPhongGroup") << "Problem while building material uniform buffer";
+        msg_error("RHIDiffuseTexturedPhongRendering") << "Problem while building material uniform buffer";
     }
 
     if (!m_diffuseImage.isNull())
@@ -254,14 +245,85 @@ void RHIDiffuseTexturedPhongGroup::updateRHIResources(QRhiResourceUpdateBatch* b
         }
     }
 }
-void RHIDiffuseTexturedPhongGroup::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport, const QRhiCommandBuffer::VertexInput* vbindings)
-{
-    //Create commands
-    cb->setGraphicsPipeline(m_pipeline);
-    cb->setShaderResources();
-    cb->setViewport(viewport);
 
-    m_rhigroup.addDrawCommand(cb, vbindings);
+
+///// RHI Wireframe Group
+bool RHIWireframeRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc, std::vector<QRhiShaderResourceBinding> globalBindings, const LoaderMaterial& loaderMaterial)
+{
+    m_materialBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::PHONG_MATERIAL_SIZE);
+
+    m_srb = rhi->newShaderResourceBindings();
+    std::vector<QRhiShaderResourceBinding> wholeBindings;
+    wholeBindings.resize(globalBindings.size());
+    std::copy(globalBindings.begin(), globalBindings.end(), wholeBindings.begin());
+    wholeBindings.push_back(QRhiShaderResourceBinding::uniformBuffer(globalBindings.size(), QRhiShaderResourceBinding::FragmentStage, m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE));
+    m_srb->setBindings(wholeBindings.begin(), wholeBindings.end());
+
+    if (!m_srb->build())
+    {
+        msg_error("RHIPhongRendering") << "Problem while building srb";
+        return false;
+    }
+
+    // Line Pipeline 
+    m_pipeline = rhi->newGraphicsPipeline();
+    QShader vs = utils::loadShader(":/shaders/gl/phong.vert.qsb"); // just use the phong one...
+    QShader fs = utils::loadShader(":/shaders/gl/phong.frag.qsb");
+    if (!vs.isValid())
+    {
+        msg_error("RHIPhongRendering") << "Problem while vs shader";
+        return false;
+    }
+    if (!fs.isValid())
+    {
+        msg_error("RHIPhongRendering") << "Problem while fs shader";
+        return false;
+    }
+
+    m_pipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({
+        { 3 * sizeof(float) } ,
+        { 3 * sizeof(float) } ,
+        { 2 * sizeof(float) }
+        }); // 3 floats vertex + 3 floats normal + 2 floats uv
+    inputLayout.setAttributes({
+        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+        { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
+        { 2, 2, QRhiVertexInputAttribute::Float2, 0 }
+        });
+    m_pipeline->setVertexInputLayout(inputLayout);
+    m_pipeline->setShaderResourceBindings(m_srb);
+    m_pipeline->setRenderPassDescriptor(rpDesc.get());
+    m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::Lines);
+    m_pipeline->setDepthTest(true);
+    m_pipeline->setDepthWrite(true);
+    m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_pipeline->setStencilTest(false);
+    //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
+
+    if (!m_pipeline->build())
+    {
+        msg_error("RHIPhongRendering") << "Problem while building pipeline";
+        return false;
+    }
+
+}
+void RHIWireframeRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
+{
+    utils::PhongMaterial material = {
+            { loaderMaterial.ambient.r(), loaderMaterial.ambient.g(),loaderMaterial.ambient.b(), loaderMaterial.ambient.a()},
+            { loaderMaterial.diffuse.r(), loaderMaterial.diffuse.g(),loaderMaterial.diffuse.b(), loaderMaterial.diffuse.a()},
+            { loaderMaterial.specular.r(), loaderMaterial.specular.g(),loaderMaterial.specular.b(), loaderMaterial.specular.a()},
+            { loaderMaterial.shininess, 0.0f , 0.0f, 0.0f}
+    };
+
+    batch->updateDynamicBuffer(m_materialBuffer, 0, utils::PHONG_MATERIAL_SIZE, &material);
+
+    if (!m_materialBuffer->build())
+    {
+        msg_error("RHIWireframeRendering") << "Problem while building material uniform buffer";
+    }
 }
 
 ///// RHI Model
@@ -527,63 +589,73 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     if (groups.size() == 0)
     {
         FaceGroup defaultGroup;
-        utils::BufferInfo bufferInfo;
         bool isTextured = this->texturename.isSet() || !this->texturename.getValue().empty();
 
         if (triangles.size() > 0)
         {
+            utils::BufferInfo bufferInfo;
             bufferInfo.buffer = m_indexTriangleBuffer;
             bufferInfo.offset = 0;
             bufferInfo.size = triangles.size();
 
             if(isTextured)
-                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
             else
-                m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+                m_renderGroups.emplace_back(std::make_shared<RHIPhongRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+
+            m_wireframeGroups.emplace_back(std::make_shared<RHIWireframeRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
 
         }
         if (quads.size() > 0)
         {
+            utils::BufferInfo bufferInfo;
             bufferInfo.buffer = m_indexTriangleBuffer;
             bufferInfo.offset = triangles.size() * sizeof(triangles[0]);
             bufferInfo.size = quads.size() * 2; //2 triangles for each quad
 
             if (isTextured)
-                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+                m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
             else
-                m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+                m_renderGroups.emplace_back(std::make_shared<RHIPhongRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
+
+            m_wireframeGroups.emplace_back(std::make_shared<RHIWireframeRendering>(RHIGroup(bufferInfo, defaultGroup.materialId)));
         }
     }
     else
     {
         for (const auto& group : groups)
         {
-            utils::BufferInfo bufferInfo; 
             const auto& materials = this->materials.getValue();
             auto loaderMaterial = materials[group.materialId];
             bool isTextured = loaderMaterial.useTexture && !loaderMaterial.textureFilename.empty();
 
             if (group.nbt > 0)
             {
+                utils::BufferInfo bufferInfo;
                 bufferInfo.buffer = m_indexTriangleBuffer;
                 bufferInfo.offset = group.tri0 * sizeof(triangles[0]);
                 bufferInfo.size = group.nbt;
 
                 if (isTextured)
-                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongRendering>(RHIGroup(bufferInfo, group.materialId)));
                 else
-                    m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                    m_renderGroups.emplace_back(std::make_shared<RHIPhongRendering>(RHIGroup(bufferInfo, group.materialId)));
+
+                m_wireframeGroups.emplace_back(std::make_shared<RHIWireframeRendering>(RHIGroup(bufferInfo, group.materialId)));
             }
             if (group.nbq > 0)
             {
+                utils::BufferInfo bufferInfo;
                 bufferInfo.buffer = m_indexTriangleBuffer;
                 bufferInfo.offset = int(triangles.size() * sizeof(triangles[0])) +  (2*group.quad0) * sizeof(triangles[0]); //2 triangles for each quad
                 bufferInfo.size = group.nbq * 2;
 
                 if (isTextured)
-                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                    m_renderGroups.emplace_back(std::make_shared<RHIDiffuseTexturedPhongRendering>(RHIGroup(bufferInfo, group.materialId)));
                 else
-                    m_renderGroups.emplace_back(std::make_shared<RHIPhongGroup>(RHIGroup(bufferInfo, group.materialId)));
+                    m_renderGroups.emplace_back(std::make_shared<RHIPhongRendering>(RHIGroup(bufferInfo, group.materialId)));
+
+                m_wireframeGroups.emplace_back(std::make_shared<RHIWireframeRendering>(RHIGroup(bufferInfo, group.materialId)));
             }
         }
     }
@@ -599,6 +671,18 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
         }
 
         renderGroup->initRHIResources(rhi, rpDesc, globalBindings, loaderMaterial);
+    }
+
+    for(auto & wireframeGroup : m_wireframeGroups)
+    {
+        const int materialID = wireframeGroup->getMaterialID();
+        auto loaderMaterial = this->material.getValue();
+        if (materialID >= 0)
+        {
+            const auto& materials = this->materials.getValue();
+            loaderMaterial = materials[materialID];
+        }
+        wireframeGroup->initRHIResources(rhi, rpDesc, globalBindings, loaderMaterial);
     }
 
     // SOFA gives a projection matrix for OpenGL system
@@ -647,6 +731,18 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
             renderGroup->updateRHIResources(batch, loaderMaterial);
         }
 
+        for (auto& wireframeGroup : m_wireframeGroups)
+        {
+            const int materialID = wireframeGroup->getMaterialID();
+            auto loaderMaterial = this->material.getValue();
+            if (materialID >= 0)
+            {
+                const auto& materials = this->materials.getValue();
+                loaderMaterial = materials[materialID];
+            }
+            wireframeGroup->updateRHIResources(batch, loaderMaterial);
+        }
+
         m_needUpdateMaterial = false;
     }
 }
@@ -664,9 +760,20 @@ void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& view
         { m_vertexPositionBuffer, quint32(m_positionsBufferSize + m_normalsBufferSize) }
     };
 
-    for (auto& renderGroup : m_renderGroups)
+    auto vparams = sofa::core::visual::VisualParams::defaultInstance();
+    if (vparams->displayFlags().getShowWireFrame())
     {
-        renderGroup->updateRHICommands(cb, viewport, vbindings);
+        for (auto& wireGroup : m_wireframeGroups)
+        {
+            wireGroup->updateRHICommands(cb, viewport, vbindings);
+        }
+    }
+    else
+    {
+        for (auto& renderGroup : m_renderGroups)
+        {
+            renderGroup->updateRHICommands(cb, viewport, vbindings);
+        }
     }
 
 }
