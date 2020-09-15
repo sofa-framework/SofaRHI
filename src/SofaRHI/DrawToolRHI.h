@@ -273,21 +273,23 @@ private:
     bool m_bHasInit = false;
 
     QRhiGraphicsPipeline* m_trianglePipeline;
-    QRhiGraphicsPipeline* m_edgePipeline;
+    QRhiGraphicsPipeline* m_linePipeline;
     QRhiGraphicsPipeline* m_pointPipeline;
-    QRhiShaderResourceBindings* m_srb;
+    QRhiShaderResourceBindings* m_triangleSrb;
+    QRhiShaderResourceBindings* m_lineSrb;
+    QRhiShaderResourceBindings* m_pointSrb;
     QRhiBuffer* m_cameraUniformBuffer;
     QRhiBuffer* m_materialUniformBuffer;
     QRhiBuffer* m_vertexPositionBuffer;
-    QRhiBuffer* m_indexTriangleBuffer;
+    QRhiBuffer* m_indexPrimitiveBuffer;
     QMatrix4x4 m_correctionMatrix;
     QRhiCommandBuffer* m_currentCB{nullptr};
     QRhiViewport m_currentViewport;
     QRhiResourceUpdateBatch* m_currentRUB{nullptr};
 
     int m_currentVertexPositionBufferSize{0};
-    int m_currentIndexTriangleBufferSize{0};
-    std::vector<VertexInputData> m_vertexInputData;
+    int m_currentIndexBufferSize{0};
+    std::map<VertexInputData::PrimitiveType, std::vector<VertexInputData> > m_vertexInputData;
 
     static constexpr int INITIAL_VERTEX_BUFFER_SIZE{1000000 * 9 * sizeof(float)}; //large enough for 1M vertices (position + normal + color)
     static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int)}; //large enough for 1M triangles

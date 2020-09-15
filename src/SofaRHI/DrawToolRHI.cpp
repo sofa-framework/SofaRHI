@@ -16,25 +16,60 @@ void DrawToolRHI::initRHI()
 {
     //create buffers (large enough to try to not resize them if necessary)
     m_vertexPositionBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, INITIAL_VERTEX_BUFFER_SIZE);
-    m_indexTriangleBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, INITIAL_INDEX_BUFFER_SIZE);
+    m_indexPrimitiveBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::IndexBuffer, INITIAL_INDEX_BUFFER_SIZE);
     m_cameraUniformBuffer = m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, utils::MATRIX4_SIZE + utils::VEC3_SIZE);
 
+    // error handling??
+    if (!m_vertexPositionBuffer->build())
+    {
+        msg_error("DrawToolRHI") << "Errow while building vertexPositionBuffer";
+        return;
+    }
+    if (!m_indexPrimitiveBuffer->build())
+    {
+        msg_error("DrawToolRHI") << "Errow while building indexTriangleBuffer";
+        return;
+    }
+
     // Create Pipelines
-    // Triangle Pipeline 
-    m_srb = m_rhi->newShaderResourceBindings();
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
-    m_srb->setBindings({
+    m_triangleSrb = m_rhi->newShaderResourceBindings();
+    m_triangleSrb->setBindings({
                          QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
         });
-    if (!m_srb->build())
+    if (!m_triangleSrb->build())
     {
-        msg_error("DrawToolRHI") << "Problem while building srb";
+        msg_error("DrawToolRHI") << "Problem while building triangleSrb";
+        //return or exit, abort, exception, etc.
+    }
+
+    m_lineSrb = m_rhi->newShaderResourceBindings();
+    m_lineSrb->setBindings({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
+        });
+    if (!m_lineSrb->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building lineSrb";
+        //return or exit, abort, exception, etc.
+    }
+
+    m_pointSrb = m_rhi->newShaderResourceBindings();
+    m_pointSrb->setBindings({
+                         QRhiShaderResourceBinding::uniformBuffer(0, commonVisibility, m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE + utils::VEC3_SIZE)
+        });
+    if (!m_pointSrb->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building pointSrb";
         //return or exit, abort, exception, etc.
     }
 
     m_trianglePipeline = m_rhi->newGraphicsPipeline();
+    m_linePipeline = m_rhi->newGraphicsPipeline();
+    m_pointPipeline = m_rhi->newGraphicsPipeline();
     QShader vs = utils::loadShader(":/shaders/gl/phong_color.vert.qsb");
     QShader fs = utils::loadShader(":/shaders/gl/phong_color.frag.qsb");
+    QShader vs_nonormal = utils::loadShader(":/shaders/gl/simple_color.vert.qsb");
+    QShader fs_nonormal = utils::loadShader(":/shaders/gl/simple_color.frag.qsb");
     if (!vs.isValid())
     {
         msg_error("DrawToolRHI") << "Problem while vs shader";
@@ -47,6 +82,9 @@ void DrawToolRHI::initRHI()
     }
 
     m_trianglePipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs }, { QRhiShaderStage::Fragment, fs } });
+    m_linePipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs_nonormal }, { QRhiShaderStage::Fragment, fs_nonormal } });
+    m_pointPipeline->setShaderStages({ { QRhiShaderStage::Vertex, vs_nonormal }, { QRhiShaderStage::Fragment, fs_nonormal } });
+    
     QRhiVertexInputLayout inputLayout;
     inputLayout.setBindings({
         { 3 * sizeof(float) } ,
@@ -58,8 +96,10 @@ void DrawToolRHI::initRHI()
         { 1, 1, QRhiVertexInputAttribute::Float3, 0 },
         { 2, 2, QRhiVertexInputAttribute::Float4, 0 }
         });
+
+    // Triangle
     m_trianglePipeline->setVertexInputLayout(inputLayout);
-    m_trianglePipeline->setShaderResourceBindings(m_srb);
+    m_trianglePipeline->setShaderResourceBindings(m_triangleSrb);
     m_trianglePipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_trianglePipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
     m_trianglePipeline->setDepthTest(true);
@@ -70,7 +110,51 @@ void DrawToolRHI::initRHI()
 
     if (!m_trianglePipeline->build())
     {
-        msg_error("DrawToolRHI") << "Problem while building pipeline";
+        msg_error("DrawToolRHI") << "Problem while building triangle pipeline";
+        //return or exit, abort, exception, etc.
+    }
+
+    QRhiVertexInputLayout noNormalInputLayout;
+    noNormalInputLayout.setBindings({
+        { 3 * sizeof(float) } ,
+        { 4 * sizeof(float) }
+        }); // 3 floats vertex + 4 floats color
+    noNormalInputLayout.setAttributes({
+        { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+        { 2, 2, QRhiVertexInputAttribute::Float4, 0 }
+        });
+
+    // Line
+    m_linePipeline->setVertexInputLayout(noNormalInputLayout);
+    m_linePipeline->setShaderResourceBindings(m_lineSrb);
+    m_linePipeline->setRenderPassDescriptor(m_rpDesc.get());
+    m_linePipeline->setTopology(QRhiGraphicsPipeline::Topology::Lines);
+    m_linePipeline->setDepthTest(true);
+    m_linePipeline->setDepthWrite(true);
+    m_linePipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_linePipeline->setStencilTest(false);
+    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
+
+    if (!m_linePipeline->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building line pipeline";
+        //return or exit, abort, exception, etc.
+    }
+
+    // Point
+    m_pointPipeline->setVertexInputLayout(noNormalInputLayout);
+    m_pointPipeline->setShaderResourceBindings(m_pointSrb);
+    m_pointPipeline->setRenderPassDescriptor(m_rpDesc.get());
+    m_pointPipeline->setTopology(QRhiGraphicsPipeline::Topology::Points);
+    m_pointPipeline->setDepthTest(true);
+    m_pointPipeline->setDepthWrite(true);
+    m_pointPipeline->setDepthOp(QRhiGraphicsPipeline::Less);
+    m_pointPipeline->setStencilTest(false);
+    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
+
+    if (!m_pointPipeline->build())
+    {
+        msg_error("DrawToolRHI") << "Problem while building point pipeline";
         //return or exit, abort, exception, etc.
     }
 
@@ -80,6 +164,10 @@ void DrawToolRHI::initRHI()
     // clipSpaceCorrMatrix() return a matrix to convert for other systems and identity for OpenGL
     m_correctionMatrix = m_rhi->clipSpaceCorrMatrix();
 
+
+    m_vertexInputData[VertexInputData::PrimitiveType::POINT].resize(0);
+    m_vertexInputData[VertexInputData::PrimitiveType::LINE].resize(0);
+    m_vertexInputData[VertexInputData::PrimitiveType::TRIANGLE].resize(0);
 }
 
 void DrawToolRHI::beginFrame(core::visual::VisualParams* vparams, QRhiResourceUpdateBatch* rub, QRhiCommandBuffer* cb, const QRhiViewport& viewport)
@@ -95,7 +183,9 @@ void DrawToolRHI::beginFrame(core::visual::VisualParams* vparams, QRhiResourceUp
     m_currentViewport = viewport;
 
     // reset buffers ... or not
-    m_vertexInputData.clear();
+    m_vertexInputData[VertexInputData::PrimitiveType::POINT].resize(0);
+    m_vertexInputData[VertexInputData::PrimitiveType::LINE].resize(0);
+    m_vertexInputData[VertexInputData::PrimitiveType::TRIANGLE].resize(0);
 
     // update the camera already
     QMatrix4x4 qProjectionMatrix, qModelViewMatrix;
@@ -128,7 +218,7 @@ void DrawToolRHI::endFrame()
     m_currentCB = nullptr;
 
     m_currentVertexPositionBufferSize = 0;
-    m_currentIndexTriangleBufferSize = 0;
+    m_currentIndexBufferSize = 0;
 }
 
 void DrawToolRHI::executeCommands()
@@ -137,7 +227,9 @@ void DrawToolRHI::executeCommands()
     m_currentCB->setShaderResources();
     m_currentCB->setViewport(m_currentViewport);
 
-    for (auto &vertexInput : m_vertexInputData)
+    // TODO: more automatic ? aka link between type and pipeline
+    //Triangle
+    for (auto &vertexInput : m_vertexInputData[VertexInputData::PrimitiveType::TRIANGLE])
     {
         const QRhiCommandBuffer::VertexInput vbindings[] = {
             { vertexInput.attributesInfo[0].buffer, quint32(vertexInput.attributesInfo[0].offset) },
@@ -149,6 +241,42 @@ void DrawToolRHI::executeCommands()
         if (vertexInput.primitiveType == VertexInputData::PrimitiveType::TRIANGLE)
         {
             m_currentCB->drawIndexed(vertexInput.nbPrimitive * 3);
+        }
+    }
+
+    ////Line
+    m_currentCB->setGraphicsPipeline(m_linePipeline);
+    m_currentCB->setShaderResources();
+    m_currentCB->setViewport(m_currentViewport);
+    for (auto& vertexInput : m_vertexInputData[VertexInputData::PrimitiveType::LINE])
+    {
+        const QRhiCommandBuffer::VertexInput vbindings[] = {
+            { vertexInput.attributesInfo[0].buffer, quint32(vertexInput.attributesInfo[0].offset) },
+            { vertexInput.attributesInfo[1].buffer, quint32(vertexInput.attributesInfo[1].offset) }
+        };
+        m_currentCB->setVertexInput(0, 2, vbindings, vertexInput.indexInfo.buffer, vertexInput.indexInfo.offset, QRhiCommandBuffer::IndexUInt32);
+
+        if (vertexInput.primitiveType == VertexInputData::PrimitiveType::LINE)
+        {
+            m_currentCB->drawIndexed(vertexInput.nbPrimitive * 2);
+        }
+    }
+
+    ////Point
+    m_currentCB->setGraphicsPipeline(m_pointPipeline);
+    m_currentCB->setShaderResources();
+    m_currentCB->setViewport(m_currentViewport);
+    for (auto& vertexInput : m_vertexInputData[VertexInputData::PrimitiveType::POINT])
+    {
+        const QRhiCommandBuffer::VertexInput vbindings[] = {
+            { vertexInput.attributesInfo[0].buffer, quint32(vertexInput.attributesInfo[0].offset) },
+            { vertexInput.attributesInfo[1].buffer, quint32(vertexInput.attributesInfo[1].offset) }
+        };
+        m_currentCB->setVertexInput(0, 2, vbindings, vertexInput.indexInfo.buffer, vertexInput.indexInfo.offset, QRhiCommandBuffer::IndexUInt32);
+
+        if (vertexInput.primitiveType == VertexInputData::PrimitiveType::POINT)
+        {
+            m_currentCB->drawIndexed(vertexInput.nbPrimitive);
         }
     }
 }
@@ -177,12 +305,81 @@ void DrawToolRHI::convertVecAToVecB(const A& vecA, B& vecB)
 
 void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float size, const std::vector<Vec4f>& colors)
 {
+    ///////////// Resources
+    std::vector <Vector3f> pointsF, normalF;
+    convertVecAToVecB(points, pointsF);
+    normalF.resize(pointsF.size()); // normals are not used but here to keep consistency
 
+    //TODO: check buffer size and resize if necessary
+    int startVertexOffset = m_currentVertexPositionBufferSize;
+
+    int positionsBufferSize = int(pointsF.size() * sizeof(pointsF[0]));
+    int normalsBufferSize = int(normalF.size() * sizeof(normalF[0]));
+    int colorsBufferSize = int(colors.size() * sizeof(colors[0]));
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferSize, pointsF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize, normalF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize, colors.data());
+
+    m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
+
+    int startIndexOffset = m_currentIndexBufferSize;
+    int nbPoints = int(points.size());
+    std::vector<int> indices;
+    indices.resize(points.size());
+    for (size_t i = 0; i < indices.size(); i++)
+        indices[i] = i;
+    int pointSize = int(nbPoints * sizeof(int));
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, pointSize, indices.data());
+
+    m_currentIndexBufferSize += pointSize;
+
+
+    ///////////// Commands
+    m_vertexInputData[VertexInputData::PrimitiveType::POINT].push_back(VertexInputData{
+        {{
+          {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
+        }} ,
+        {m_indexPrimitiveBuffer, startIndexOffset, pointSize},
+        VertexInputData::PrimitiveType::POINT, nbPoints
+    });
 }
 
 void DrawToolRHI::internalDrawLines(const std::vector<Vector3>& points, const std::vector< Vec2i >& index, float size, const std::vector<Vec4f>& colors)
 {
+    ///////////// Resources
+    std::vector <Vector3f> pointsF, normalF;
+    convertVecAToVecB(points, pointsF);
+    normalF.resize(pointsF.size()); // normals are not used but here to keep consistency
 
+    //TODO: check buffer size and resize if necessary
+    int startVertexOffset = m_currentVertexPositionBufferSize;
+
+    int positionsBufferSize = int(pointsF.size() * sizeof(pointsF[0]));
+    int normalsBufferSize = int(normalF.size() * sizeof(normalF[0]));
+    int colorsBufferSize = int(colors.size() * sizeof(colors[0]));
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferSize, pointsF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize, normalF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize, colors.data());
+
+    m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
+
+    int startIndexOffset = m_currentIndexBufferSize;
+    int nbLines = int(index.size());
+    int lineSize = int(nbLines * sizeof(index[0]));
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, lineSize, index.data());
+
+    m_currentIndexBufferSize += lineSize;
+
+    ///////////// Commands
+    m_vertexInputData[VertexInputData::PrimitiveType::LINE].push_back(VertexInputData{
+        {{
+          {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
+        }} ,
+        {m_indexPrimitiveBuffer, startIndexOffset, lineSize},
+        VertexInputData::PrimitiveType::LINE, nbLines
+        });
 }
 void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors)
 {
@@ -203,34 +400,21 @@ void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, cons
 
     m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
 
-    int startIndexOffset = m_currentIndexTriangleBufferSize;
+    int startIndexOffset = m_currentIndexBufferSize;
     int nbTriangles = int(index.size());
     int triangleSize = int(nbTriangles * sizeof(index[0]));
-    m_currentRUB->updateDynamicBuffer(m_indexTriangleBuffer, startIndexOffset, triangleSize, index.data());
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, triangleSize, index.data());
     
-    m_currentIndexTriangleBufferSize += triangleSize;
-
-    // error handling??
-    if (!m_vertexPositionBuffer->build())
-    {
-        msg_error("DrawToolRHI") << "Errow while building vertexPositionBuffer";
-        return;
-    }
-    if (!m_indexTriangleBuffer->build())
-    {
-        msg_error("DrawToolRHI") << "Errow while building indexTriangleBuffer";
-        return;
-    }
-    
+    m_currentIndexBufferSize += triangleSize;
 
     ///////////// Commands
-    m_vertexInputData.push_back(VertexInputData { 
+    m_vertexInputData[VertexInputData::PrimitiveType::TRIANGLE].push_back(VertexInputData {
         {{
           {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
           {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize},
           {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
         }} ,
-        {m_indexTriangleBuffer, startIndexOffset, triangleSize},
+        {m_indexPrimitiveBuffer, startIndexOffset, triangleSize},
         VertexInputData::PrimitiveType::TRIANGLE, nbTriangles
     });
 
@@ -255,7 +439,11 @@ void DrawToolRHI::internalDrawHexahedra(const std::vector<Vector3>& points, cons
 
 void DrawToolRHI::drawPoints(const std::vector<Vector3>& points, float size, const  Vec4f& color)
 {
+    std::vector<Vec4f> colors;
+    colors.resize(points.size());
+    std::fill(colors.begin(), colors.end(), color);
 
+    internalDrawPoints(points, size, colors);
 }
 
 void DrawToolRHI::drawPoints(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors)
