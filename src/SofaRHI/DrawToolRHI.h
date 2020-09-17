@@ -23,6 +23,7 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
     using DisplayFlags = sofa::core::visual::DisplayFlags;
 
     using Vec4i = sofa::defaulttype::Vec4i;
+    using Matrix4f = sofa::defaulttype::Mat4x4f;
 
     using QRhiPtr = std::shared_ptr<QRhi>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
@@ -38,7 +39,8 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
         {
             POINT = 0,
             LINE = 1,
-            TRIANGLE = 2,
+            TRIANGLE = 2, 
+            INSTANCE_TRIANGLE = 3
         };
         struct MemoryInfo {
             QRhiBuffer* buffer;
@@ -46,10 +48,12 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
             int size;
         };
 
-        std::array<MemoryInfo, 3> attributesInfo;
+        std::vector<MemoryInfo> attributesInfo;
+        std::vector<MemoryInfo> instanceAttributesInfo;
         MemoryInfo indexInfo;
         PrimitiveType primitiveType;
         int nbPrimitive;
+        int nbInstance = 1;
     };
     
 public:
@@ -263,6 +267,7 @@ private:
     void internalDrawPoints(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors);
     void internalDrawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const std::vector<Vec4f>& colors);
     void internalDrawTriangles(const std::vector<Vector3> &points, const std::vector< Vec3i > &index, const std::vector<Vector3>  &normal, const std::vector<Vec4f>& colors);
+    void internalDrawInstancedTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors, const std::vector<Vector3f>& transforms);
 
     QRhiPtr m_rhi; //needed to create Buffers
     QRhiRenderPassDescriptorPtr m_rpDesc;
@@ -271,24 +276,31 @@ private:
     QRhiGraphicsPipeline* m_trianglePipeline;
     QRhiGraphicsPipeline* m_linePipeline;
     QRhiGraphicsPipeline* m_pointPipeline;
+    QRhiGraphicsPipeline* m_instancedTrianglePipeline;
     QRhiShaderResourceBindings* m_triangleSrb;
     QRhiShaderResourceBindings* m_lineSrb;
     QRhiShaderResourceBindings* m_pointSrb;
+    QRhiShaderResourceBindings* m_instancedTriangleSrb;
+    
     QRhiBuffer* m_cameraUniformBuffer;
     QRhiBuffer* m_materialUniformBuffer;
-    QRhiBuffer* m_vertexPositionBuffer;
-    QRhiBuffer* m_indexPrimitiveBuffer;
-    QMatrix4x4 m_correctionMatrix;
-    QRhiCommandBuffer* m_currentCB{nullptr};
-    QRhiViewport m_currentViewport;
-    QRhiResourceUpdateBatch* m_currentRUB{nullptr};
+    QRhiBuffer* m_vertexBuffer;
+    QRhiBuffer* m_indexBuffer;
+    QRhiBuffer* m_instanceBuffer;
 
-    int m_currentVertexPositionBufferByteSize{0};
-    int m_currentIndexBufferByteSize{0};
+    QMatrix4x4 m_correctionMatrix;
+    QRhiCommandBuffer* m_currentCB = nullptr;
+    QRhiViewport m_currentViewport;
+    QRhiResourceUpdateBatch* m_currentRUB = nullptr;
+
+    int m_currentVertexBufferByteSize = 0;
+    int m_currentIndexBufferByteSize = 0;
+    int m_currentInstanceBufferByteSize = 0;
     std::map<VertexInputData::PrimitiveType, std::vector<VertexInputData> > m_vertexInputData;
 
-    static constexpr int INITIAL_VERTEX_BUFFER_SIZE{1000000 * 10 * sizeof(float)}; //large enough for 1M vertices (position + normal + color)
-    static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int)}; //large enough for 1M triangles
+    static constexpr int INITIAL_VERTEX_BUFFER_SIZE{ 1000000 * 10 * sizeof(float) }; //large enough for 1M vertices (position + normal + color)
+    static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int) }; //large enough for 1M triangles
+    static constexpr int INITIAL_INSTANCE_BUFFER_SIZE{ 1000000 * 3 * sizeof(float) }; //1M instance of vec3 (translation...)
 };
 
 } // namespace sofa::rhi
