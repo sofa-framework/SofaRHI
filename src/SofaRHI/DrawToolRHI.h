@@ -287,11 +287,11 @@ private:
     QRhiViewport m_currentViewport;
     QRhiResourceUpdateBatch* m_currentRUB{nullptr};
 
-    int m_currentVertexPositionBufferSize{0};
-    int m_currentIndexBufferSize{0};
+    int m_currentVertexPositionBufferByteSize{0};
+    int m_currentIndexBufferByteSize{0};
     std::map<VertexInputData::PrimitiveType, std::vector<VertexInputData> > m_vertexInputData;
 
-    static constexpr int INITIAL_VERTEX_BUFFER_SIZE{1000000 * 9 * sizeof(float)}; //large enough for 1M vertices (position + normal + color)
+    static constexpr int INITIAL_VERTEX_BUFFER_SIZE{1000000 * 10 * sizeof(float)}; //large enough for 1M vertices (position + normal + color)
     static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int)}; //large enough for 1M triangles
 };
 

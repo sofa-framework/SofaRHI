@@ -121,7 +121,7 @@ void DrawToolRHI::initRHI()
         }); // 3 floats vertex + 4 floats color
     noNormalInputLayout.setAttributes({
         { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
-        { 2, 2, QRhiVertexInputAttribute::Float4, 0 }
+        { 1, 1, QRhiVertexInputAttribute::Float4, 0 }
         });
 
     // Line
@@ -217,14 +217,14 @@ void DrawToolRHI::endFrame()
     m_currentRUB = nullptr;
     m_currentCB = nullptr;
 
-    m_currentVertexPositionBufferSize = 0;
-    m_currentIndexBufferSize = 0;
+    m_currentVertexPositionBufferByteSize = 0;
+    m_currentIndexBufferByteSize = 0;
 }
 
 void DrawToolRHI::executeCommands()
 {
     m_currentCB->setGraphicsPipeline(m_trianglePipeline);
-    m_currentCB->setShaderResources();
+    m_currentCB->setShaderResources(m_triangleSrb);
     m_currentCB->setViewport(m_currentViewport);
 
     // TODO: more automatic ? aka link between type and pipeline
@@ -246,7 +246,7 @@ void DrawToolRHI::executeCommands()
 
     ////Line
     m_currentCB->setGraphicsPipeline(m_linePipeline);
-    m_currentCB->setShaderResources();
+    m_currentCB->setShaderResources(m_lineSrb);
     m_currentCB->setViewport(m_currentViewport);
     for (auto& vertexInput : m_vertexInputData[VertexInputData::PrimitiveType::LINE])
     {
@@ -264,7 +264,7 @@ void DrawToolRHI::executeCommands()
 
     ////Point
     m_currentCB->setGraphicsPipeline(m_pointPipeline);
-    m_currentCB->setShaderResources();
+    m_currentCB->setShaderResources(m_pointSrb);
     m_currentCB->setViewport(m_currentViewport);
     for (auto& vertexInput : m_vertexInputData[VertexInputData::PrimitiveType::POINT])
     {
@@ -308,39 +308,36 @@ void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float s
     ///////////// Resources
     std::vector <Vector3f> pointsF, normalF;
     convertVecAToVecB(points, pointsF);
-    normalF.resize(pointsF.size()); // normals are not used but here to keep consistency
 
     //TODO: check buffer size and resize if necessary
-    int startVertexOffset = m_currentVertexPositionBufferSize;
+    int startVertexOffset = m_currentVertexPositionBufferByteSize;
 
-    int positionsBufferSize = int(pointsF.size() * sizeof(pointsF[0]));
-    int normalsBufferSize = int(normalF.size() * sizeof(normalF[0]));
-    int colorsBufferSize = int(colors.size() * sizeof(colors[0]));
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferSize, pointsF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize, normalF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize, colors.data());
+    int positionsBufferByteSize = int(pointsF.size() * sizeof(pointsF[0]));
+    int colorsBufferByteSize = int(colors.size() * sizeof(colors[0]));
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize, pointsF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, colorsBufferByteSize, colors.data());
 
-    m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
+    m_currentVertexPositionBufferByteSize += positionsBufferByteSize + colorsBufferByteSize;
 
-    int startIndexOffset = m_currentIndexBufferSize;
+    int startIndexOffset = m_currentIndexBufferByteSize;
     int nbPoints = int(points.size());
     std::vector<int> indices;
     indices.resize(points.size());
     for (size_t i = 0; i < indices.size(); i++)
         indices[i] = i;
-    int pointSize = int(nbPoints * sizeof(int));
-    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, pointSize, indices.data());
+    int pointByteSize = int(nbPoints * sizeof(int));
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, pointByteSize, indices.data());
 
-    m_currentIndexBufferSize += pointSize;
+    m_currentIndexBufferByteSize += pointByteSize;
 
 
     ///////////// Commands
     m_vertexInputData[VertexInputData::PrimitiveType::POINT].push_back(VertexInputData{
         {{
-          {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
-          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
+          {m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, colorsBufferByteSize}
         }} ,
-        {m_indexPrimitiveBuffer, startIndexOffset, pointSize},
+        {m_indexPrimitiveBuffer, startIndexOffset, pointByteSize},
         VertexInputData::PrimitiveType::POINT, nbPoints
     });
 }
@@ -348,39 +345,37 @@ void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float s
 void DrawToolRHI::internalDrawLines(const std::vector<Vector3>& points, const std::vector< Vec2i >& index, float size, const std::vector<Vec4f>& colors)
 {
     ///////////// Resources
-    std::vector <Vector3f> pointsF, normalF;
+    std::vector <Vector3f> pointsF;
     convertVecAToVecB(points, pointsF);
-    normalF.resize(pointsF.size()); // normals are not used but here to keep consistency
 
     //TODO: check buffer size and resize if necessary
-    int startVertexOffset = m_currentVertexPositionBufferSize;
+    int startVertexOffset = m_currentVertexPositionBufferByteSize;
 
-    int positionsBufferSize = int(pointsF.size() * sizeof(pointsF[0]));
-    int normalsBufferSize = int(normalF.size() * sizeof(normalF[0]));
-    int colorsBufferSize = int(colors.size() * sizeof(colors[0]));
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferSize, pointsF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize, normalF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize, colors.data());
+    int positionsBufferByteSize = int(pointsF.size() * sizeof(pointsF[0]));
+    int colorsBufferByteSize = int(colors.size() * sizeof(colors[0]));
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize, pointsF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, colorsBufferByteSize, colors.data());
 
-    m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
+    m_currentVertexPositionBufferByteSize += positionsBufferByteSize + colorsBufferByteSize;
 
-    int startIndexOffset = m_currentIndexBufferSize;
+    int startIndexOffset = m_currentIndexBufferByteSize;
     int nbLines = int(index.size());
-    int lineSize = int(nbLines * sizeof(index[0]));
-    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, lineSize, index.data());
+    int lineByteSize = int(nbLines * sizeof(index[0]));
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, lineByteSize, index.data());
 
-    m_currentIndexBufferSize += lineSize;
+    m_currentIndexBufferByteSize += lineByteSize;
 
     ///////////// Commands
     m_vertexInputData[VertexInputData::PrimitiveType::LINE].push_back(VertexInputData{
         {{
-          {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
-          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
+          {m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, colorsBufferByteSize}
         }} ,
-        {m_indexPrimitiveBuffer, startIndexOffset, lineSize},
+        {m_indexPrimitiveBuffer, startIndexOffset, lineByteSize},
         VertexInputData::PrimitiveType::LINE, nbLines
         });
 }
+
 void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors)
 {
     ///////////// Resources
@@ -389,32 +384,32 @@ void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, cons
     convertVecAToVecB(normal, normalF);
 
     //TODO: check buffer size and resize if necessary
-    int startVertexOffset = m_currentVertexPositionBufferSize;
+    int startVertexOffset = m_currentVertexPositionBufferByteSize;
 
-    int positionsBufferSize = int(pointsF.size() * sizeof(pointsF[0]));
-    int normalsBufferSize = int(normalF.size() * sizeof(normalF[0]));
-    int colorsBufferSize = int(colors.size() * sizeof(colors[0]));
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferSize, pointsF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize, normalF.data());
-    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize, colors.data());
+    int positionsBufferByteSize = int(pointsF.size() * sizeof(pointsF[0]));
+    int normalsBufferByteSize = int(normalF.size() * sizeof(normalF[0]));
+    int colorsBufferByteSize = int(colors.size() * sizeof(colors[0]));
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize, pointsF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, normalsBufferByteSize, normalF.data());
+    m_currentRUB->updateDynamicBuffer(m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize + normalsBufferByteSize, colorsBufferByteSize, colors.data());
 
-    m_currentVertexPositionBufferSize += positionsBufferSize + normalsBufferSize + colorsBufferSize;
+    m_currentVertexPositionBufferByteSize += positionsBufferByteSize + normalsBufferByteSize + colorsBufferByteSize;
 
-    int startIndexOffset = m_currentIndexBufferSize;
+    int startIndexOffset = m_currentIndexBufferByteSize;
     int nbTriangles = int(index.size());
-    int triangleSize = int(nbTriangles * sizeof(index[0]));
-    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, triangleSize, index.data());
+    int triangleByteSize = int(nbTriangles * sizeof(index[0]));
+    m_currentRUB->updateDynamicBuffer(m_indexPrimitiveBuffer, startIndexOffset, triangleByteSize, index.data());
     
-    m_currentIndexBufferSize += triangleSize;
+    m_currentIndexBufferByteSize += triangleByteSize;
 
     ///////////// Commands
     m_vertexInputData[VertexInputData::PrimitiveType::TRIANGLE].push_back(VertexInputData {
         {{
-          {m_vertexPositionBuffer, startVertexOffset, positionsBufferSize},
-          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize, normalsBufferSize},
-          {m_vertexPositionBuffer, startVertexOffset + positionsBufferSize + normalsBufferSize, colorsBufferSize}
+          {m_vertexPositionBuffer, startVertexOffset, positionsBufferByteSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize, normalsBufferByteSize},
+          {m_vertexPositionBuffer, startVertexOffset + positionsBufferByteSize + normalsBufferByteSize, colorsBufferByteSize}
         }} ,
-        {m_indexPrimitiveBuffer, startIndexOffset, triangleSize},
+        {m_indexPrimitiveBuffer, startIndexOffset, triangleByteSize},
         VertexInputData::PrimitiveType::TRIANGLE, nbTriangles
     });
 
