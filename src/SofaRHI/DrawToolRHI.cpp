@@ -415,22 +415,6 @@ void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, cons
 
 
 }
-void DrawToolRHI::internalDrawQuads(const std::vector<Vector3>& points, const std::vector< Vec4i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors)
-{
-
-}
-void DrawToolRHI::internalDrawSpheres(const std::vector<Vector3>& points, const std::vector<float>& radius, const Vec4f& color)
-{
-
-}
-void DrawToolRHI::internalDrawTetrahedra(const std::vector<Vector3>& points, const std::vector<Vec4f>& colors, const float scale)
-{
-
-}
-void DrawToolRHI::internalDrawHexahedra(const std::vector<Vector3>& points, const std::vector<Vec4f>& colors, const float scale)
-{
-
-}
 
 void DrawToolRHI::drawPoints(const std::vector<Vector3>& points, float size, const  Vec4f& color)
 {
@@ -682,7 +666,7 @@ void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientati
 
 void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec4f& color)
 {
-    internalDrawSpheres(points, radius, color);
+    //internalDrawSpheres(points, radius, color);
 }
 
 void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, float radius, const Vec4f& color)
@@ -750,18 +734,23 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const Vec4f& col
 void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors)
 {
     std::vector<Vector3> normals;
-    std::vector<Vec4i> indices;
+    std::vector<Vec3i> indices;
 
     normals.reserve(points.size());
     indices.reserve(points.size() / 4);
 
     for(int i = 0 ; i< int(points.size()) ; i += 4)
     {
-        int index[4] {int(i), int(i+1), int(i+2), int(i+3)};
-        indices.push_back( Vec4i{index[0], index[1], index[2], index[3]} );
+        const int p0 = i;
+        const int p1 = i + 1;
+        const int p2 = i + 2;
+        const int p3 = i + 3;
 
-        Vector3 n0 = computeNormal(points[index[0]], points[index[1]], points[index[2]]);
-        Vector3 n1 = computeNormal(points[index[2]], points[index[3]], points[index[0]]);
+        indices.push_back( { p0, p1, p2 } );
+        indices.push_back( { p2, p3, p0 } );
+
+        Vector3 n0 = computeNormal(points[p0], points[p1], points[p2]);
+        Vector3 n1 = computeNormal(points[p2], points[p3], points[p0]);
         Vector3 qn = (n0 + n1) * 0.5;
         qn.normalize();
 
@@ -771,7 +760,7 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
         normals.push_back ( qn );
     }
 
-    internalDrawQuads(points, indices, normals, colors);
+    internalDrawTriangles(points, indices, normals, colors);
 
 }
 
@@ -779,23 +768,37 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
 void DrawToolRHI::drawTetrahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vec4f &colour){}
 void DrawToolRHI::drawTetrahedra(const std::vector<Vector3> &points, const Vec4f& color)
 {
-    std::vector<Vec4f> colors;
-
-    colors.resize(points.size());
-    std::fill(colors.begin(), colors.end(), color);
-
-    internalDrawTetrahedra(points,colors, 1.0f);
+    drawScaledTetrahedra(points, color, 1.0f);
 }
 
 //Scale each tetrahedron
 void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const Vec4f& color, const float scale)
 {
-    std::vector<Vec4f> colors;
+    std::vector<Vector3> newpoints;
+    newpoints.reserve(points.size());
 
-    colors.resize(points.size());
-    std::fill(colors.begin(), colors.end(), color);
+    // assert that points is divisible by 4
+    for (int i = 0; i < int(points.size()); i += 4)
+    {
+        const int p0 = i;
+        const int p1 = i + 1;
+        const int p2 = i + 2;
+        const int p3 = i + 3;
 
-    internalDrawTetrahedra(points,colors,scale);
+        Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3]) * 0.25f;
+
+        Vector3 npoint0 = ((points[p0] - center) * scale) + center;
+        Vector3 npoint1 = ((points[p1] - center) * scale) + center;
+        Vector3 npoint2 = ((points[p2] - center) * scale) + center;
+        Vector3 npoint3 = ((points[p3] - center) * scale) + center;
+
+        newpoints.push_back(npoint0); newpoints.push_back(npoint1); newpoints.push_back(npoint2);
+        newpoints.push_back(npoint1); newpoints.push_back(npoint2); newpoints.push_back(npoint3);
+        newpoints.push_back(npoint2); newpoints.push_back(npoint3); newpoints.push_back(npoint0);
+        newpoints.push_back(npoint3); newpoints.push_back(npoint0); newpoints.push_back(npoint1);
+    }
+
+    drawTriangles(newpoints, color);
 }
 
 /// Hexahedra methods
@@ -810,18 +813,52 @@ void DrawToolRHI::drawHexahedra(const std::vector<Vector3> &points, const Vec4f&
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
 
-    internalDrawHexahedra(points,colors, 1.0);
+    drawScaledHexahedra(points,color, 1.0f);
 }
 
 //Scale each hexahedron
 void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const Vec4f& color, const float scale)
 {
+    std::vector<Vector3> newpoints;
+    std::vector<Vector3> normals;
+    std::vector<Vec4i> quads;
     std::vector<Vec4f> colors;
+    colors.reserve(points.size());
+    quads.reserve(points.size());
+    normals.reserve(points.size());
 
-    colors.resize(points.size());
-    std::fill(colors.begin(), colors.end(), color);
+    // assert that points is divisible by 8
+    for (int i = 0; i < int(points.size()); i += 8)
+    {
+        const int p0 = i;
+        const int p1 = i + 1;
+        const int p2 = i + 2;
+        const int p3 = i + 3;
+        const int p4 = i + 4;
+        const int p5 = i + 5;
+        const int p6 = i + 6;
+        const int p7 = i + 7;
 
-    internalDrawHexahedra(points,colors, scale);
+        Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3] + points[p4] + points[p5] + points[p6] + points[p7]) * 0.125f;
+
+        Vector3 npoint0 = ((points[p0] - center) * scale) + center;
+        Vector3 npoint1 = ((points[p1] - center) * scale) + center;
+        Vector3 npoint2 = ((points[p2] - center) * scale) + center;
+        Vector3 npoint3 = ((points[p3] - center) * scale) + center;
+        Vector3 npoint4 = ((points[p4] - center) * scale) + center;
+        Vector3 npoint5 = ((points[p5] - center) * scale) + center;
+        Vector3 npoint6 = ((points[p6] - center) * scale) + center;
+        Vector3 npoint7 = ((points[p7] - center) * scale) + center;
+
+        newpoints.push_back(npoint0); newpoints.push_back(npoint1); newpoints.push_back(npoint2); newpoints.push_back(npoint3);
+        newpoints.push_back(npoint4); newpoints.push_back(npoint7); newpoints.push_back(npoint6); newpoints.push_back(npoint5);
+        newpoints.push_back(npoint1); newpoints.push_back(npoint0); newpoints.push_back(npoint4); newpoints.push_back(npoint5);
+        newpoints.push_back(npoint1); newpoints.push_back(npoint5); newpoints.push_back(npoint6); newpoints.push_back(npoint2);
+        newpoints.push_back(npoint2); newpoints.push_back(npoint6); newpoints.push_back(npoint7); newpoints.push_back(npoint3);
+        newpoints.push_back(npoint0); newpoints.push_back(npoint3); newpoints.push_back(npoint7); newpoints.push_back(npoint4);
+    }
+
+    drawQuads(newpoints, color);
 }
 
 void DrawToolRHI::drawSphere(const Vector3 &p, float radius){}

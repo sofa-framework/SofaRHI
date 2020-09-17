@@ -263,10 +263,6 @@ private:
     void internalDrawPoints(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors);
     void internalDrawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const std::vector<Vec4f>& colors);
     void internalDrawTriangles(const std::vector<Vector3> &points, const std::vector< Vec3i > &index, const std::vector<Vector3>  &normal, const std::vector<Vec4f>& colors);
-    void internalDrawQuads(const std::vector<Vector3> &points, const std::vector< Vec4i > &index, const std::vector<Vector3>  &normal, const std::vector<Vec4f>& colors);
-    void internalDrawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec4f &color);
-    void internalDrawTetrahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
-    void internalDrawHexahedra(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors, const float scale);
 
     QRhiPtr m_rhi; //needed to create Buffers
     QRhiRenderPassDescriptorPtr m_rpDesc;
