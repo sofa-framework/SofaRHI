@@ -15,6 +15,14 @@ struct MeshGenerator
 
     static void SmoothSphere(std::vector<TVertexType>& vertices, std::vector<TNormalType>& normals, std::vector<TTexcoordType>& texcoords, std::vector<TTriangleType>& indices,
         float radius, int sectors, int stacks);
+
+
+    /// http://www.songho.ca/opengl/gl_cylinder.html
+    static void RoughCylinder(std::vector<TVertexType>& vertices, std::vector<TNormalType>& normals, std::vector<TTexcoordType>& texcoords, std::vector<TTriangleType>& indices,
+        float baseRadius, float topRadius, float height, int sectors, int stacks);
+
+    static void SmoothCylinder(std::vector<TVertexType>& vertices, std::vector<TNormalType>& normals, std::vector<TTexcoordType>& texcoords, std::vector<TTriangleType>& indices,
+        float baseRadius, float topRadius, float height, int sectors, int stacks);
 };
 
 
