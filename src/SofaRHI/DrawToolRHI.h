@@ -23,6 +23,7 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
     using DisplayFlags = sofa::core::visual::DisplayFlags;
 
     using Vec4i = sofa::defaulttype::Vec4i;
+    using Vec2f = sofa::defaulttype::Vec2f;
     using Matrix4f = sofa::defaulttype::Mat4x4f;
 
     using QRhiPtr = std::shared_ptr<QRhi>;
@@ -257,7 +258,7 @@ public:
 
 private:
 
-    static Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
+    //static Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
 
     /// Hidden general drawing methods
     using Vector3f = std::array<float, 3>;
@@ -301,6 +302,7 @@ private:
     static constexpr int INITIAL_VERTEX_BUFFER_SIZE{ 1000000 * 10 * sizeof(float) }; //large enough for 1M vertices (position + normal + color)
     static constexpr int INITIAL_INDEX_BUFFER_SIZE{ 1000000 * 3 * sizeof(unsigned int) }; //large enough for 1M triangles
     static constexpr int INITIAL_INSTANCE_BUFFER_SIZE{ 1000000 * 3 * sizeof(float) }; //1M instance of vec3 (translation...)
+
 };
 
 } // namespace sofa::rhi

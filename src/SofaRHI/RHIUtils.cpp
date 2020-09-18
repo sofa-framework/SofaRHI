@@ -15,4 +15,6 @@ QShader loadShader(const std::string& name)
     return QShader();
 }
 
+
+
 } // namespace sofa::utils::rhi

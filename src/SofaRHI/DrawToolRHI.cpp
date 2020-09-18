@@ -344,14 +344,6 @@ void DrawToolRHI::executeCommands()
     }
 }
 
-DrawToolRHI::Vector3 DrawToolRHI::computeNormal(const Vector3& a, const Vector3& b, const Vector3& c)
-{
-    Vector3 n = cross((b - a), (c - a));
-    n.normalize();
-
-    return n;
-}
-
 template<typename A, typename B>
 void DrawToolRHI::convertVecAToVecB(const A& vecA, B& vecB)
 {
@@ -640,7 +632,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
         const Vector3& a = points[ 3*i+0 ];
         const Vector3& b = points[ 3*i+1 ];
         const Vector3& c = points[ 3*i+2 ];
-        Vector3 n = computeNormal(a,b,c);
+        Vector3 n = utils::computeNormal(a,b,c);
 
         normals[ 3*i+0 ]= n;
         normals[ 3*i+1 ]= n;
@@ -707,7 +699,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
             const Vector3& a = points[ 3*i+0 ];
             const Vector3& b = points[ 3*i+1 ];
             const Vector3& c = points[ 3*i+2 ];
-            Vector3 n = computeNormal(a,b,c);
+            Vector3 n = utils::computeNormal(a,b,c);
 
             normals[ 3*i+0 ]= n;
             normals[ 3*i+1 ]= n;
@@ -793,25 +785,31 @@ void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vec
     std::vector<Vector3> meshNormals;
     std::vector<Vec4f> meshColors;
     std::vector<Vec3i> meshTriangles;
-    double min = -2.5;
-    double max = 2.5;
-    meshPoints.push_back({ min, min, 0.0 });
-    meshPoints.push_back({ max, min, 0.0 });
-    meshPoints.push_back({ max, max, 0.0 });
-    meshPoints.push_back({ min, max, 0.0 });
+    std::vector<Vec2f> meshTexcoords;
+    //double min = -2.5;
+    //double max = 2.5;
+    //meshPoints.push_back({ min, min, 0.0 });
+    //meshPoints.push_back({ max, min, 0.0 });
+    //meshPoints.push_back({ max, max, 0.0 });
+    //meshPoints.push_back({ min, max, 0.0 });
 
-    meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
+    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
+    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
+    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
+    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
 
-    meshColors.push_back(color);
-    meshColors.push_back(color);
-    meshColors.push_back(color);
-    meshColors.push_back(color);
+    //meshColors.push_back(color);
+    //meshColors.push_back(color);
+    //meshColors.push_back(color);
+    //meshColors.push_back(color);
 
-    meshTriangles.push_back({ 0, 1, 2 });
-    meshTriangles.push_back({ 2, 3, 0 });
+    //meshTriangles.push_back({ 0, 1, 2 });
+    //meshTriangles.push_back({ 2, 3, 0 });
+
+    utils::buildVerticesSmooth<Vector3, Vec2f, Vec3i>(radius[0], 16, 32, meshPoints, meshNormals, meshTexcoords, meshTriangles);
+
+    meshColors.resize(meshPoints.size());
+    std::fill(meshColors.begin(), meshColors.end(), color);
 
     internalDrawInstancedTriangles(meshPoints, meshTriangles, meshNormals, meshColors, translations);
 }
@@ -896,8 +894,8 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
         indices.push_back( { p0, p1, p2 } );
         indices.push_back( { p2, p3, p0 } );
 
-        Vector3 n0 = computeNormal(points[p0], points[p1], points[p2]);
-        Vector3 n1 = computeNormal(points[p2], points[p3], points[p0]);
+        Vector3 n0 = utils::computeNormal(points[p0], points[p1], points[p2]);
+        Vector3 n1 = utils::computeNormal(points[p2], points[p3], points[p0]);
         Vector3 qn = (n0 + n1) * 0.5;
         qn.normalize();
 

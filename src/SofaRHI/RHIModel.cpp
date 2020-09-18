@@ -94,6 +94,7 @@ bool RHIPhongRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPt
         return false;
     }
 
+    return true;
 }
 void RHIPhongRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
 {
@@ -215,6 +216,7 @@ bool RHIDiffuseTexturedPhongRendering::initRHIResources(QRhiPtr rhi, QRhiRenderP
         return false;
     }
 
+    return true;
 }
 void RHIDiffuseTexturedPhongRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
 {
@@ -308,6 +310,7 @@ bool RHIWireframeRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescript
         return false;
     }
 
+    return true;
 }
 void RHIWireframeRendering::updateRHIResources(QRhiResourceUpdateBatch* batch, const LoaderMaterial& loaderMaterial)
 {
