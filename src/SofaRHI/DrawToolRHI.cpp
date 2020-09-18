@@ -3,6 +3,8 @@
 
 #include <sofa/core/visual/VisualParams.h>
 
+#include <SofaRHI/RHIMeshGenerator.inl>
+
 namespace sofa::rhi
 {
 
@@ -780,33 +782,13 @@ void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vec
         translations.push_back( {float(p[0]), float(p[1]), float(p[2]) } );
     }
 
-    //test with a unit quad
     std::vector<Vector3> meshPoints;
     std::vector<Vector3> meshNormals;
     std::vector<Vec4f> meshColors;
     std::vector<Vec3i> meshTriangles;
     std::vector<Vec2f> meshTexcoords;
-    //double min = -2.5;
-    //double max = 2.5;
-    //meshPoints.push_back({ min, min, 0.0 });
-    //meshPoints.push_back({ max, min, 0.0 });
-    //meshPoints.push_back({ max, max, 0.0 });
-    //meshPoints.push_back({ min, max, 0.0 });
 
-    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-    //meshNormals.push_back({ double(1.0f), double(0.0f), double(0.0f) });
-
-    //meshColors.push_back(color);
-    //meshColors.push_back(color);
-    //meshColors.push_back(color);
-    //meshColors.push_back(color);
-
-    //meshTriangles.push_back({ 0, 1, 2 });
-    //meshTriangles.push_back({ 2, 3, 0 });
-
-    utils::buildVerticesSmooth<Vector3, Vec2f, Vec3i>(radius[0], 16, 32, meshPoints, meshNormals, meshTexcoords, meshTriangles);
+    MeshGenerator<Vector3, Vector3, Vec2f, Vec3i>::SmoothSphere(meshPoints, meshNormals, meshTexcoords, meshTriangles, radius[0], 16, 32);
 
     meshColors.resize(meshPoints.size());
     std::fill(meshColors.begin(), meshColors.end(), color);

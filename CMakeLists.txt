@@ -9,6 +9,7 @@ set(SOURCE_FILES
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.cpp
     # ${SOFARHI_SRC_DIR}/RHIObject.cpp
     ${SOFARHI_SRC_DIR}/RHIUtils.cpp
+    ${SOFARHI_SRC_DIR}/RHIMeshGenerator.cpp
     ${SOFARHI_SRC_DIR}/RHIModel.cpp
     ${SOFARHI_SRC_DIR}/DrawToolRHI.cpp
     # ${SOFARHI_SRC_DIR}/RHIVisualManagerLoop.cpp
@@ -24,6 +25,8 @@ set(HEADER_FILES
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.h
     # ${SOFARHI_SRC_DIR}/RHIObject.h
     ${SOFARHI_SRC_DIR}/RHIUtils.h
+    ${SOFARHI_SRC_DIR}/RHIMeshGenerator.h
+    ${SOFARHI_SRC_DIR}/RHIMeshGenerator.inl
     ${SOFARHI_SRC_DIR}/RHIVisualModel.h
     ${SOFARHI_SRC_DIR}/RHIModel.h
     ${SOFARHI_SRC_DIR}/DrawToolRHI.h

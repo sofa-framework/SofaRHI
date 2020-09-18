@@ -929,6 +929,11 @@ void RHIViewer::drawScene()
 
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
+    if (m_bShowAxis)
+    {
+        if (m_vparams->sceneBBox().isValid())
+            m_drawTool->drawBoundingBox(m_vparams->sceneBBox().minBBox(), m_vparams->sceneBBox().maxBBox());
+    }
     getSimulation()->draw(m_vparams, groot.get()); // will update and call command
 
     m_drawTool->executeCommands();
