@@ -10,7 +10,6 @@
 #include <sofa/simulation/UpdateMappingEndEvent.h>
 #include <sofa/simulation/PropagateEventVisitor.h>
 
-
 #include <sofa/helper/AdvancedTimer.h>
 
 namespace sofa::rhi
@@ -39,29 +38,52 @@ void RHIVisualManagerLoop::init()
 }
 
 
+
 void RHIVisualManagerLoop::initStep(sofa::core::ExecParams* params)
 {
-    if ( !gRoot ) return;
-    gRoot->execute<simulation::VisualInitVisitor>(params);
+    if (!gRoot) return;
+
+    gRoot->execute<sofa::simulation::VisualInitVisitor>(params);
+
+    //I DONT UNDERSTAND WHY THERE IS NO VISUALPARAMS IN A VISUAL INITIALIZATION !111!!!
+    auto vparams = sofa::core::visual::VisualParams::defaultInstance();
+
+    RHIVisualDrawInitResourcesVisitor initVisitor(vparams);
+    gRoot->execute(&initVisitor);
+    
     // Do a visual update now as it is not done in load() anymore
     /// \todo Separate this into another method?
-    gRoot->execute<simulation::VisualUpdateVisitor>(params);
+    gRoot->execute<sofa::simulation::VisualUpdateVisitor>(params);
 }
 
 void RHIVisualManagerLoop::updateStep(sofa::core::ExecParams* params)
 {
-    if ( !gRoot ) return;
+    if (!gRoot) return;
+
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printNode("UpdateVisual");
 #endif
-    sofa::helper::AdvancedTimer::begin("UpdateVisual");
+    gRoot->execute<sofa::simulation::VisualUpdateVisitor>(params);
 
-    gRoot->execute<simulation::VisualUpdateVisitor>(params);
-    sofa::helper::AdvancedTimer::end("UpdateVisual");
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printCloseNode("UpdateVisual");
 #endif
+}
 
+void RHIVisualManagerLoop::updateRHIResourcesStep(sofa::core::visual::VisualParams* vparams)
+{
+    if (!gRoot) return;
+
+#ifdef SOFA_DUMP_VISITOR_INFO
+    simulation::Visitor::printNode("UpdateRHIResources");
+#endif
+
+    RHIVisualDrawUpdateResourcesVisitor updateVisitor(vparams);
+    gRoot->execute(&updateVisitor);
+
+#ifdef SOFA_DUMP_VISITOR_INFO
+    simulation::Visitor::printCloseNode("UpdateRHIResources");
+#endif
 }
 
 void RHIVisualManagerLoop::updateContextStep(sofa::core::visual::VisualParams* vparams)
@@ -76,46 +98,13 @@ void RHIVisualManagerLoop::updateContextStep(sofa::core::visual::VisualParams* v
 void RHIVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
 {
     if ( !gRoot ) return;
+    
+    vparams->pass() = sofa::core::visual::VisualParams::Std;
 
-    if (gRoot->visualManager.empty())
-    {
-        vparams->pass() = sofa::core::visual::VisualParams::Std;
-        RHIVisualDrawVisitor act ( vparams );
-        act.setTags(this->getTags());
-        gRoot->execute ( &act );
-        vparams->pass() = sofa::core::visual::VisualParams::Transparent;
-        RHIVisualDrawVisitor act2 ( vparams );
-        act2.setTags(this->getTags());
-        gRoot->execute ( &act2 );
-    }
-    else
-    {
-        simulation::Node::Sequence<core::visual::VisualManager>::iterator begin = gRoot->visualManager.begin(), end = gRoot->visualManager.end(), it;
-        for (it = begin; it != end; ++it)
-            (*it)->preDrawScene(vparams);
-        bool rendered = false; // true if a manager did the rendering
-        for (it = begin; it != end; ++it)
-            if ((*it)->drawScene(vparams))
-            {
-                rendered = true;
-                break;
-            }
-        if (!rendered) // do the rendering
-        {
-            vparams->pass() = sofa::core::visual::VisualParams::Std;
-
-            RHIVisualDrawVisitor act ( vparams );
-            act.setTags(this->getTags());
-            gRoot->execute ( &act );
-            vparams->pass() = sofa::core::visual::VisualParams::Transparent;
-            RHIVisualDrawVisitor act2 ( vparams );
-            act2.setTags(this->getTags());
-            gRoot->execute ( &act2 );
-        }
-        simulation::Node::Sequence<core::visual::VisualManager>::reverse_iterator rbegin = gRoot->visualManager.rbegin(), rend = gRoot->visualManager.rend(), rit;
-        for (rit = rbegin; rit != rend; ++rit)
-            (*rit)->postDrawScene(vparams);
-    }
+    // RHI
+    RHIVisualDrawUpdateCommandsVisitor act ( vparams );
+    act.setTags(this->getTags());
+    gRoot->execute ( &act );
 }
 
 void RHIVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vparams, SReal* minBBox, SReal* maxBBox, bool init)
@@ -123,7 +112,7 @@ void RHIVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vpa
     simulation::VisualComputeBBoxVisitor act(vparams);
     if ( gRoot )
         gRoot->execute ( act );
-//    cerr<<"RHIVisualManagerLoop::computeBBoxStep, xm= " << act.minBBox[0] <<", xM= " << act.maxBBox[0] << endl;
+
     if (init)
     {
         minBBox[0] = (SReal)(act.minBBox[0]);

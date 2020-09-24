@@ -820,7 +820,40 @@ void DrawToolRHI::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, 
 /// Draw a cube of size one centered on the current point.
 void DrawToolRHI::drawCube(const float& radius, const Vec4f& color, const int& subd){}
 
-void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd){}
+void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd)
+{
+    std::vector<Vector3> meshVertices;
+    std::vector<Vector3> meshNormals;
+    std::vector<Vec4f> meshColors;
+    std::vector<Vec3i> meshTriangles;
+    std::vector<Vec2f> meshTexcoords;
+
+    const auto& direction = p2 - p1;
+    const auto& height = direction.norm();
+    MeshGenerator<Vector3, Vector3, Vec2f, Vec3i>::RoughCylinder(meshVertices, meshNormals, meshTexcoords, meshTriangles, radius, radius, height, subd, 2);
+
+    meshColors.resize(meshVertices.size());
+    std::fill(meshColors.begin(), meshColors.end(), color);
+
+    //rotate and translate cylinder
+    //extremely not optimized
+    auto rotation = helper::Quater< SReal >({ 1.0, 0.0, 0.0 }, direction);
+    //auto transformation = Matrix4d::transformTranslation(p1) *
+    //    Matrix4d::transformRotation(rotation);
+    //for (auto& v : meshVertices)
+    //{
+    //    v = transformation.transform(v);
+    //}
+
+    for (auto& n : meshNormals)
+    {
+        n[0] *= -1;
+        n[1] *= -1;
+        n[2] *= -1;
+    }
+
+    internalDrawTriangles(meshVertices, meshTriangles, meshNormals, meshColors);
+}
 
 void DrawToolRHI::drawCapsule(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd){}
 

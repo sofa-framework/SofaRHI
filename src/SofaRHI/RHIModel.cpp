@@ -347,24 +347,8 @@ void RHIModel::initVisual()
 
     sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
 
-    // I suppose it would be better to get the visualParams given as params but it is only in update/draw steps
-    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
+    // dont do anything RHI anymore
 
-    if (rhiDrawTool == nullptr)
-    {
-        msg_error("RHIModel") << "Can only works with RHIViewer as gui; DrawToolRHI not detected.";
-        return;
-    }
-
-    QRhiPtr rhi = rhiDrawTool->getRHI();
-    QRhiRenderPassDescriptorPtr rpDesc = rhiDrawTool->getRenderPassDescriptor();
-    if (!initRHIResources(rhi, rpDesc))
-    {
-        msg_error() << "Error while initializing RHI features";
-        return;
-    }
-
-    sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Valid);
 }
 
 void RHIModel::updateVisual()
@@ -376,12 +360,7 @@ void RHIModel::updateVisual()
     //update geometry
     InheritedVisual::updateVisual();
 
-    //a bit of inconsistency with the vparams thing
-    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
-    QRhiResourceUpdateBatch* batch = rhiDrawTool->getResourceUpdateBatch();
-
-    if (batch != nullptr)
-        updateRHIResources(batch);
+    // dont do anything RHI anymore
 }
 
 void RHIModel::updateBuffers()
@@ -395,42 +374,7 @@ void RHIModel::updateBuffers()
 
 void RHIModel::internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent)
 {
-    if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
-    {
-        return;
-    }
-    if(!vparams->displayFlags().getShowVisual())
-    {
-        return;
-    }
-
-    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(vparams->drawTool());
-    QRhiCommandBuffer* cb = rhiDrawTool->getCommandBuffer();
-    const QRhiViewport& viewport = rhiDrawTool->getViewport();
-
-    updateRHICommands(cb,viewport);
-
-    //todo: cache variables to not set flags every time
-    //if(!vparams->displayFlags().getShowVisual())
-    //{
-    //    //m_wireframeEntity->setEnabled(false);
-    //    setGeometriesEnabled(false);
-    //}
-    //else
-    //{
-    //    setGeometriesEnabled(true);
-
-    //    if(vparams->displayFlags().getShowWireFrame())
-    //    {
-    //        setWireframeEnabled(true);
-    //    }
-    //    else
-    //    {
-    //        setWireframeEnabled(false);
-    //    }
-    //}
-
-
+    // dont do anything RHI anymore
 }
 
 
@@ -567,6 +511,21 @@ void RHIModel::updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch)
 
 bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
 {
+    // I suppose it would be better to get the visualParams given as params but it is only in update/draw steps
+    rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
+
+    if (rhiDrawTool == nullptr)
+    {
+        msg_error("RHIModel") << "Can only works with RHIViewer as gui; DrawToolRHI not detected.";
+        return false;
+    }
+
+    //if (!initRHIResources(rhi, rpDesc))
+    //{
+    //    msg_error() << "Error while initializing RHI features";
+    //    return;
+    //}
+
     const VecCoord& vertices = this->getVertices();
     const VecDeriv& vnormals = this->getVnormals();
     const VecTexCoord& vtexcoords = this->getVtexcoords();
@@ -694,6 +653,9 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     // clipSpaceCorrMatrix() return a matrix to convert for other systems and identity for OpenGL
     m_correctionMatrix = rhi->clipSpaceCorrMatrix(); 
 
+
+    d_componentState.setValue(sofa::core::objectmodel::ComponentState::Valid);
+
     return true;
 }
 
@@ -703,6 +665,9 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
     {
         return;
     }
+
+    if (batch == nullptr)
+        return;
 
     //will be updated all the time (camera, light and no step)
     updateCameraUniformBuffer(batch);
@@ -752,10 +717,20 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
 
 void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
 {
+    auto vparams = sofa::core::visual::VisualParams::defaultInstance();
+
+    if (d_componentState.getValue() != sofa::core::objectmodel::ComponentState::Valid)
+    {
+        return;
+    }
+    if (!vparams->displayFlags().getShowVisual())
+    {
+        return;
+    }
     if (m_vertexPositionBuffer == nullptr)
     {
         return;
-    } 
+    }
 
     const QRhiCommandBuffer::VertexInput vbindings[] = {
         { m_vertexPositionBuffer, quint32(0) },
@@ -763,7 +738,6 @@ void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& view
         { m_vertexPositionBuffer, quint32(m_positionsBufferSize + m_normalsBufferSize) }
     };
 
-    auto vparams = sofa::core::visual::VisualParams::defaultInstance();
     if (vparams->displayFlags().getShowWireFrame())
     {
         for (auto& wireGroup : m_wireframeGroups)

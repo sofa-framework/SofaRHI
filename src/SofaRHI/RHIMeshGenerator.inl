@@ -249,7 +249,9 @@ template<typename TVertexType, typename TNormalType, typename TTexcoordType, typ
 void MeshGenerator<TVertexType, TNormalType, TTexcoordType, TTriangleType>::RoughCylinder(std::vector<TVertexType>& vertices, std::vector<TNormalType>& normals, std::vector<TTexcoordType>& texcoords, std::vector<TTriangleType>& indices,
     float baseRadius, float topRadius, float height, int sectors, int stacks)
 {
-    if (radius < 0.0f)
+    if (baseRadius < 0.0f)
+        return;
+    if (topRadius < 0.0f)
         return;
     if (sectors < 4)
         return;
@@ -308,14 +310,15 @@ void MeshGenerator<TVertexType, TNormalType, TTexcoordType, TTriangleType>::Roug
         {
             x = unitCircleVertices[k];
             y = unitCircleVertices[k + 1];
-            addVertex(x * radius, y * radius, z);   // position
-            addNormal(sideNormals[k], sideNormals[k + 1], sideNormals[k + 2]); // normal
-            addTexCoord((float)j / sectors, t); // tex coord
+
+            vertices.push_back({ x * radius, y * radius, z });
+            normals.push_back({ sideNormals[k], sideNormals[k + 1], sideNormals[k + 2] });
+            texcoords.push_back({ (float)j / sectors, t });
         }
     }
 
     // remember where the base.top vertices start
-    unsigned int baseVertexIndex = (unsigned int)vertices.size() / 3;
+    int baseVertexIndex = (int)vertices.size() / 3;
 
     // put vertices of base of cylinder
     z = -height * 0.5f;
@@ -327,13 +330,14 @@ void MeshGenerator<TVertexType, TNormalType, TTexcoordType, TTriangleType>::Roug
     {
         x = unitCircleVertices[j];
         y = unitCircleVertices[j + 1];
+
         vertices.push_back({ x * baseRadius, y * baseRadius, z });
         normals.push_back({ 0, 0, -1 });
         texcoords.push_back({ -x * 0.5f + 0.5f, -y * 0.5f + 0.5f });// flip horizontal
     }
 
     // remember where the base vertices start
-    unsigned int topVertexIndex = (unsigned int)vertices.size() / 3;
+    int topVertexIndex = (int)vertices.size() / 3;
 
     // put vertices of top of cylinder
     z = height * 0.5f;
@@ -350,7 +354,7 @@ void MeshGenerator<TVertexType, TNormalType, TTexcoordType, TTriangleType>::Roug
     }
 
     // put indices for sides
-    unsigned int k1, k2;
+    int k1, k2;
     for (int i = 0; i < stacks; ++i)
     {
         k1 = i * (sectors + 1);     // beginning of current stack
@@ -388,6 +392,15 @@ template<typename TVertexType, typename TNormalType, typename TTexcoordType, typ
 void MeshGenerator<TVertexType, TNormalType, TTexcoordType, TTriangleType>::SmoothCylinder(std::vector<TVertexType>& vertices, std::vector<TNormalType>& normals, std::vector<TTexcoordType>& texcoords, std::vector<TTriangleType>& indices,
     float baseRadius, float topRadius, float height, int sectors, int stacks)
 {
+    if (baseRadius < 0.0f)
+        return;
+    if (topRadius < 0.0f)
+        return;
+    if (sectors < 4)
+        return;
+    if (stacks < 2)
+        return;
+
     // tmp vertex definition (x,y,z,s,t)
     struct TempVertex
     {

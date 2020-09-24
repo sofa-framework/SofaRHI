@@ -25,6 +25,7 @@ class DrawToolRHI : public sofa::core::visual::DrawTool
     using Vec4i = sofa::defaulttype::Vec4i;
     using Vec2f = sofa::defaulttype::Vec2f;
     using Matrix4f = sofa::defaulttype::Mat4x4f;
+    using Matrix4d = sofa::defaulttype::Mat4x4d;
 
     using QRhiPtr = std::shared_ptr<QRhi>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;

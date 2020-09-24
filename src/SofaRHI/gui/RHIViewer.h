@@ -11,7 +11,7 @@
 
 #include <SofaRHI/DrawToolRHI.h>
 #include <SofaRHI/gui/RHIBackend.h>
-#include <SofaRHI/RHIModel.h>
+#include <SofaRHI/RHIVisualManagerLoop.h>
 
 #include <QtGui/private/qrhi_p.h>
 #include <QtGui/private/qrhinull_p.h>
@@ -133,8 +133,8 @@ private:
 
     bool m_notExposed { false };
     bool m_newlyExposed { false };
-    void resizeSwapChain();
-    helper::vector<RHIModel::SPtr> m_rhiModels;
+    void resizeSwapChain(); 
+    RHIVisualManagerLoop::SPtr m_rhiloop;
     core::visual::VisualParams* m_vparams;
     DrawToolRHI* m_drawTool;
     std::shared_ptr<QRhi> m_rhi;

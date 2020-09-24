@@ -1,11 +1,12 @@
 #include <SofaRHI/gui/RHIViewer.h>
 
+#include <SofaRHI/RHIVisualManagerLoop.h>
+
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/Simulation.h>
-#include <sofa/simulation/DefaultVisualManagerLoop.h>
 
 #include <sofa/gui/GUIManager.h>
 #include <sofa/gui/qt/RealGUI.h>
@@ -253,17 +254,6 @@ void RHIViewer::setupRHI()
 
 void RHIViewer::setupMeshes()
 {
-    // custom get() function to get special BaseObject
-    // without BaseObject inheritance
-
-    //groot->get<RHIModel,
-    //        helper::vector<RHIModel::SPtr> >
-    //        (&m_rhiModels, sofa::core::objectmodel::BaseContext::SearchRoot);
-
-    //for(auto rhiModel : m_rhiModels)
-    //{
-    //    rhiModel->initRHI(m_rhi, m_rpDesc);
-    //}
 
 }
 
@@ -890,7 +880,7 @@ void RHIViewer::resizeSwapChain()
 void RHIViewer::drawScene()
 {
     if (!groot) return;
-    
+
     if (m_swapChain->currentPixelSize() != m_swapChain->surfacePixelSize() || m_newlyExposed)
     {
         resizeSwapChain();
@@ -921,11 +911,12 @@ void RHIViewer::drawScene()
 
     if (!m_bHasInitTexture) // "initTexture" is the super old function for initVisual
     {
-        getSimulation()->initTextures(groot.get()); //will call update as well so updates will be nullptr if not after beginframe
+        getSimulation()->initTextures(groot.get()); // will call Visitor for initializing RHI resources  for RHIModels (only)
         m_bHasInitTexture = true;
     }
 
-    getSimulation()->updateVisual(groot.get()); // will update resource batch
+    //getSimulation()->updateVisual(groot.get()); 
+    m_rhiloop->updateRHIResourcesStep(m_vparams); // will call Visitor for updating RHI resources for RHIModels and Other BaseObjects
 
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
@@ -933,18 +924,21 @@ void RHIViewer::drawScene()
     {
         if (m_vparams->sceneBBox().isValid())
             m_drawTool->drawBoundingBox(m_vparams->sceneBBox().minBBox(), m_vparams->sceneBBox().maxBBox());
-    }
-    getSimulation()->draw(m_vparams, groot.get()); // will update and call command
 
-    m_drawTool->executeCommands();
+        m_drawTool->drawCylinder({ 0.0, 0.0, 0.0 }, { 0.0, 30.0, 0.0 }, 10, { 1.0, 0.0, 0.0, 1.0 });
+
+    }
+    
+    getSimulation()->draw(m_vparams, groot.get()); // will call Visitor for updating RHI commands for RHIModels (only)
+
+    m_drawTool->executeCommands(); // will execute commands for Other BaseObjects
 
     cb->endPass();
 
     m_drawTool->endFrame();
 
     m_rhi->endFrame(m_swapChain);
-
-    
+        
 
     _waitForRender = false;
     if (!captureTimer.isActive())
@@ -958,30 +952,30 @@ bool RHIViewer::load()
 
     bool res = SofaViewer::load();
 
-    //if (res)
-    //{
-    //    sofa::core::visual::VisualLoop::SPtr vloop;
-    //    groot->get(vloop);
-    //    //wont happen because Simulation is setting the default one before :(
-    //    if(!vloop)
-    //    {
-    //        RHIVisualManagerLoop::SPtr rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
-    //        groot->addObject(rhiloop);
-    //    }
-    //    else
-    //    {
-    //        if(dynamic_cast<sofa::rhi::RHIVisualManagerLoop*>(vloop.get()) == nullptr)
-    //        {
-    //            msg_warning("RHIViewer") << "This viewer needs a RHIVisualManagerLoop.";
-    //            msg_warning("RHIViewer") << "Fallback: the viewer will replace the existing one.";
+    if (res)
+    {
+        sofa::core::visual::VisualLoop::SPtr vloop;
+        groot->get(vloop);
+        //wont happen because Simulation is setting the default one before :(
+        if(!vloop)
+        {
+            m_rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
+            groot->addObject(m_rhiloop);
+        }
+        else
+        {
+            if(dynamic_cast<sofa::rhi::RHIVisualManagerLoop*>(vloop.get()) == nullptr)
+            {
+                msg_warning("RHIViewer") << "This viewer needs a RHIVisualManagerLoop.";
+                msg_warning("RHIViewer") << "Fallback: the viewer will replace the existing one.";
 
-    //            groot->removeObject(vloop);
-    //            RHIVisualManagerLoop::SPtr rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
-    //            groot->addObject(rhiloop);
-    //            rhiloop->init();
-    //        }
-    //    }
-    //}
+                groot->removeObject(vloop);
+                m_rhiloop = sofa::core::objectmodel::New<RHIVisualManagerLoop>();
+                groot->addObject(m_rhiloop);
+                m_rhiloop->init();
+            }
+        }
+    }
 
     return res;
 }

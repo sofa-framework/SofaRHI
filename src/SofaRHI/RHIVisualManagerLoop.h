@@ -8,27 +8,6 @@
 
 namespace sofa::rhi
 {
-//
-//class SOFA_SOFARHI_API ResourceUpdateVisitor : public sofa::simulation::VisualVisitor
-//{
-//public:
-//    ResourceUpdateVisitor(core::visual::VisualParams* params)
-//        : VisualVisitor(params)
-//    {}
-//
-//    void processVisualModel(simulation::Node*, core::visual::VisualModel* vm) override
-//    {
-//        RHIVisualModel* rhivm = dynamic_cast<RHIVisualModel*>(vm);
-//        rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(this->vparams->drawTool());
-//        QRhiCommandBuffer* cb = rhiDrawTool->getCommandBuffer();
-//        const QRhiViewport& viewport = rhiDrawTool->getViewport();
-//        auto batch = rhiDrawTool->getResourceUpdateBatch();
-//
-//        if(rhivm != nullptr)
-//            rhivm->updateRHIResources(batch);
-//    }
-//    const char* getClassName() const override { return "ResourceUpdateVisitor"; }
-//};
 
 class SOFA_SOFARHI_API RHIVisualManagerLoop : public sofa::core::visual::VisualLoop
 {
@@ -59,6 +38,10 @@ public:
 
     /// Compute the bounding box of the scene. If init is set to "true", then minBBox and maxBBox will be initialised to a default value
     void computeBBoxStep(sofa::core::visual::VisualParams* vparams, SReal* minBBox, SReal* maxBBox, bool init) override;
+
+    // Own RHI update
+    // (can not be inserted alongside updateStep(), as updateStep is called by Simulation() at a time there is no "RHI Context"
+    void updateRHIResourcesStep(sofa::core::visual::VisualParams* vparams);
 
 protected:
 
