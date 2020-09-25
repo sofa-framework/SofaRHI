@@ -86,6 +86,13 @@ bool RHIPhongRendering::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPt
     m_pipeline->setDepthWrite(true);
     m_pipeline->setDepthOp(QRhiGraphicsPipeline::Less);
     m_pipeline->setStencilTest(false);
+    QRhiGraphicsPipeline::TargetBlend premulAlphaBlend;
+    premulAlphaBlend.enable = true;
+    QVarLengthArray<QRhiGraphicsPipeline::TargetBlend, 4> rtblends;
+    int colorAttCount = 1; // for later use
+    for (int i = 0; i < colorAttCount; ++i)
+        rtblends << premulAlphaBlend;
+    m_pipeline->setTargetBlends(rtblends.cbegin(), rtblends.cend());
     //m_pipeline->setCullMode(QRhiGraphicsPipeline::None);
 
     if (!m_pipeline->build())

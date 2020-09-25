@@ -40,6 +40,21 @@ void DrawToolRHI::initRHI()
     }
 
     // Create Pipelines
+    // Common options
+    // Alpha
+    QRhiGraphicsPipeline::TargetBlend premulAlphaBlend;
+    premulAlphaBlend.enable = true;
+    QVarLengthArray<QRhiGraphicsPipeline::TargetBlend, 4> rtblends;
+    int colorAttCount = 1; // for later use
+    for (int i = 0; i < colorAttCount; ++i)
+        rtblends << premulAlphaBlend;
+    // Depth 
+    bool depthTest = true;
+    bool depthWrite = true;
+    QRhiGraphicsPipeline::CompareOp depthOp = QRhiGraphicsPipeline::Less;
+    // Stencil Test
+    bool stencilTest = false;
+
     const QRhiShaderResourceBinding::StageFlags commonVisibility = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
     m_triangleSrb = m_rhi->newShaderResourceBindings();
     m_triangleSrb->setBindings({
@@ -129,11 +144,11 @@ void DrawToolRHI::initRHI()
     m_trianglePipeline->setShaderResourceBindings(m_triangleSrb);
     m_trianglePipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_trianglePipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    m_trianglePipeline->setDepthTest(true);
-    m_trianglePipeline->setDepthWrite(true);
-    m_trianglePipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_trianglePipeline->setStencilTest(false);
-    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
+    m_trianglePipeline->setDepthTest(depthTest);
+    m_trianglePipeline->setDepthWrite(depthWrite);
+    m_trianglePipeline->setDepthOp(depthOp);
+    m_trianglePipeline->setStencilTest(stencilTest);
+    m_trianglePipeline->setTargetBlends(rtblends.cbegin(), rtblends.cend());
 
     if (!m_trianglePipeline->build())
     {
@@ -156,11 +171,11 @@ void DrawToolRHI::initRHI()
     m_linePipeline->setShaderResourceBindings(m_lineSrb);
     m_linePipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_linePipeline->setTopology(QRhiGraphicsPipeline::Topology::Lines);
-    m_linePipeline->setDepthTest(true);
-    m_linePipeline->setDepthWrite(true);
-    m_linePipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_linePipeline->setStencilTest(false);
-    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
+    m_linePipeline->setDepthTest(depthTest);
+    m_linePipeline->setDepthWrite(depthWrite);
+    m_linePipeline->setDepthOp(depthOp);
+    m_linePipeline->setStencilTest(stencilTest);
+    m_linePipeline->setTargetBlends(rtblends.cbegin(), rtblends.cend());
 
     if (!m_linePipeline->build())
     {
@@ -173,11 +188,11 @@ void DrawToolRHI::initRHI()
     m_pointPipeline->setShaderResourceBindings(m_pointSrb);
     m_pointPipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_pointPipeline->setTopology(QRhiGraphicsPipeline::Topology::Points);
-    m_pointPipeline->setDepthTest(true);
-    m_pointPipeline->setDepthWrite(true);
-    m_pointPipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_pointPipeline->setStencilTest(false);
-    //m_trianglePipeline->setCullMode(QRhiGraphicsPipeline::None);
+    m_pointPipeline->setDepthTest(depthTest);
+    m_pointPipeline->setDepthWrite(depthWrite);
+    m_pointPipeline->setDepthOp(depthOp);
+    m_pointPipeline->setStencilTest(stencilTest);
+    m_pointPipeline->setTargetBlends(rtblends.cbegin(), rtblends.cend());
 
     if (!m_pointPipeline->build())
     {
@@ -204,10 +219,11 @@ void DrawToolRHI::initRHI()
     m_instancedTrianglePipeline->setShaderResourceBindings(m_instancedTriangleSrb);
     m_instancedTrianglePipeline->setRenderPassDescriptor(m_rpDesc.get());
     m_instancedTrianglePipeline->setTopology(QRhiGraphicsPipeline::Topology::Triangles);
-    m_instancedTrianglePipeline->setDepthTest(true);
-    m_instancedTrianglePipeline->setDepthWrite(true);
-    m_instancedTrianglePipeline->setDepthOp(QRhiGraphicsPipeline::Less);
-    m_instancedTrianglePipeline->setStencilTest(false);
+    m_instancedTrianglePipeline->setDepthTest(depthTest);
+    m_instancedTrianglePipeline->setDepthWrite(depthWrite);
+    m_instancedTrianglePipeline->setDepthOp(depthOp);
+    m_instancedTrianglePipeline->setStencilTest(stencilTest);
+    m_instancedTrianglePipeline->setTargetBlends(rtblends.cbegin(), rtblends.cend());
 
     if (!m_instancedTrianglePipeline->build())
     {

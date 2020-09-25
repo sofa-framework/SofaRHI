@@ -38,6 +38,6 @@ void main()
 	vec3 specular = specular_strength * spec * light_color;  
 
     vec3 res_color = object_color * (ambient + diffuse + specular);
-    frag_color = vec4(res_color, 1.0f);
+    frag_color = vec4(res_color, out_color.a);
     //frag_color = vec4(out_position.z, out_position.z, out_position.z, 1.0f);
 }
