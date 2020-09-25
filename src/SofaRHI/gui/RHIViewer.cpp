@@ -15,6 +15,7 @@
 #include <sofa/gui/ColourPickingVisitor.h>
 
 #include <sofa/helper/system/FileSystem.h>
+#include <sofa/helper/system/PluginManager.h>
 #include <fstream>
 
 #include <QtGui/private/qshader_p.h>
@@ -122,8 +123,8 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     
     m_window = new QWindow();
 
-    s_keyGgraphicsAPI = "ogl";
-    //s_keyGgraphicsAPI = "d3d";
+    //s_keyGgraphicsAPI = "ogl";
+    s_keyGgraphicsAPI = "d3d";
 
     const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
 
@@ -203,16 +204,45 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     m_vparams->drawTool() = m_drawTool;
 
 
-    ///
     sofa::core::ObjectFactory::ClassEntry::SPtr replaceOglModel;
     sofa::core::ObjectFactory::AddAlias("VisualModel", "RHIModel", true,
             &replaceOglModel);
-    if(replaceOgl)
+
+    ///// Make sure that there is no (direct) OpenGL related stuff in the scene
+    //if(replaceOgl)
+    //{
+    //    msg_warning("RHIViewer") << "All occcurences of OglModel will be replaced by RHIModel";
+    //    sofa::core::ObjectFactory::AddAlias("OglModel", "RHIModel", true,
+    //            &replaceOglModel);
+    //}
+
+    const std::string openglPlugin = "SofaOpenglVisual";
+    auto& pluginManager = sofa::helper::system::PluginManager::getInstance();
+    if (pluginManager.pluginIsLoaded(openglPlugin))
     {
-        msg_warning("RHIViewer") << "All occcurences of OglModel will be replaced by RHIModel";
-        sofa::core::ObjectFactory::AddAlias("OglModel", "RHIModel", true,
-                &replaceOglModel);
+        msg_warning("RHIViewer") << "SofaOpenGLVisual plugin has been loaded and is incompatible with SofaRHI";
+        msg_warning("RHIViewer") << "SofaRHI will disable all its components and replace OglModel with RHIModel to prevent crashing.";
+
+        std::vector<sofa::core::ObjectFactory::ClassEntry::SPtr> listComponents;
+        sofa::core::ObjectFactory::getInstance()->getEntriesFromTarget(listComponents, openglPlugin);
+        for (auto component : listComponents)
+        {
+            sofa::core::ObjectFactory::ClassEntry::SPtr entry;
+            if(component->className != "OglModel")
+            { 
+                sofa::core::ObjectFactory::AddAlias(component->className, "DisabledObject", true,
+                    &entry);
+            }
+            else
+            {
+                msg_warning("RHIViewer") << "All occurences of OglModel will be replaced by RHIModel";
+                sofa::core::ObjectFactory::AddAlias("OglModel", "RHIModel", true,
+                    &entry);
+            }
+        }
     }
+
+
     groot = nullptr;
     initTexturesDone = false;
 
