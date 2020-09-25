@@ -455,13 +455,13 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
 void RHIModel::updateIndexBuffer(QRhiResourceUpdateBatch* batch)
 {
     const auto& triangles = this->getTriangles();
-    const VecQuad& quads = this->getQuads();
+    const auto& quads = this->getQuads();
     //convert to triangles
-    VecTriangle quadTriangles;
-    for (const Quad& q : quads)
+    VecVisualTriangle quadTriangles;
+    for (const auto& q : quads)
     {
-        quadTriangles.push_back(Triangle(q[0], q[1], q[2]));
-        quadTriangles.push_back(Triangle(q[2], q[3], q[0]));
+        quadTriangles.push_back({ q[0], q[1], q[2] });
+        quadTriangles.push_back({ q[2], q[3], q[0] });
     }
 
     int triangleSize = int(triangles.size() * sizeof(triangles[0]));
