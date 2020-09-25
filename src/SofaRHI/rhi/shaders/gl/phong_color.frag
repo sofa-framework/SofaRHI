@@ -10,13 +10,13 @@ layout(std140, binding = 0) uniform buf
 {
     mat4 mvp_matrix;
     vec3 camera_position;
-} ubuf;
+} u_camerabuf;
 
 void main()
 {
 	// needed as uniform
 	vec3 object_color = out_color.xyz;
-	vec3 light_pos = vec3(0.0, 0.0, 10.0);
+	vec3 light_pos = u_camerabuf.camera_position; //vec3(0.0, 30.0, 100.0);
 	vec3 light_color = vec3(1.0, 1.0, 1.0);
 	float ambient_strength = 0.1;
 	float specular_strength = 1.0;
@@ -32,7 +32,7 @@ void main()
 	vec3 diffuse = diff * light_color;
 
 	// Spec
-	vec3 view_dir = normalize(ubuf.camera_position - out_world_position);
+	vec3 view_dir = normalize(u_camerabuf.camera_position - out_world_position);
 	vec3 reflect_dir = reflect(-light_dir, norm);  
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
 	vec3 specular = specular_strength * spec * light_color;  

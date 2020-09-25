@@ -29,7 +29,7 @@ void main()
 		discard;
 
 	// needed as uniform
-	vec3 light_pos = vec3(0.0, 30.0, 100.0);
+	vec3 light_pos = u_camerabuf.camera_position; //vec3(0.0, 30.0, 100.0);
 	vec3 light_color = vec3(1.0, 1.0, 1.0);
 	float shininess = u_materialbuf.shininess[0];
 
