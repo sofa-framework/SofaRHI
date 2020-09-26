@@ -43,6 +43,14 @@ public:
     // (can not be inserted alongside updateStep(), as updateStep is called by Simulation() at a time there is no "RHI Context"
     void updateRHIResourcesStep(sofa::core::visual::VisualParams* vparams);
 
+    // Compute Calls
+    // Initialize RHI Compute resources for RHIComputeModels
+    void initComputeCommandsStep(sofa::core::visual::VisualParams* vparams);
+    // Update RHI Compute resources for RHIComputeModels
+    void updateComputeResourcesStep(sofa::core::visual::VisualParams* vparams);
+    // Update RHI Compute commands for RHIComputeModels
+    void updateComputeCommandsStep(sofa::core::visual::VisualParams* vparams);
+
 protected:
 
     simulation::Node* gRoot;

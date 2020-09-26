@@ -930,15 +930,31 @@ void RHIViewer::drawScene()
     }
 
     QRhiCommandBuffer* cb = m_swapChain->currentFrameCommandBuffer();
-    QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
-    QSize outputSize = m_swapChain->currentPixelSize();
     QRhiResourceUpdateBatch* updates;
     updates = (m_rhi->nextResourceUpdateBatch());
+    QRhiRenderTarget* rt = m_swapChain->currentFrameRenderTarget();
+    QSize outputSize = m_swapChain->currentPixelSize();
 
     QRhiViewport viewport(0, 0, float(outputSize.width()), float(outputSize.height()));// , currentCamera->getZNear(), currentCamera->getZFar());
 
     m_drawTool->beginFrame(m_vparams, updates, cb, viewport);
 
+#ifdef ENABLE_RHI_COMPUTE
+    // Optional Compute Stage
+    // test if compute shader is available blabla
+    if (!m_bHasInitTexture)
+    {
+        m_rhiloop->initComputeCommandsStep(m_vparams);
+    }
+
+    m_rhiloop->updateComputeResourcesStep(m_vparams); // will call Visitor for updating RHI Compute resources for RHIComputeModels
+    cb->beginComputePass(updates);
+    m_rhiloop->updateComputeCommandsStep(m_vparams); // will call Visitor for updating RHI Compute commands for RHIComputeModels
+
+    cb->endComputePass();
+#endif // ENABLE_RHI_COMPUTE
+
+    // Rendering Stage
     if (!m_bHasInitTexture) // "initTexture" is the super old function for initVisual
     {
         getSimulation()->initTextures(groot.get()); // will call Visitor for initializing RHI resources  for RHIModels (only)
@@ -946,7 +962,7 @@ void RHIViewer::drawScene()
     }
 
     //getSimulation()->updateVisual(groot.get()); 
-    m_rhiloop->updateRHIResourcesStep(m_vparams); // will call Visitor for updating RHI resources for RHIModels and Other BaseObjects
+    m_rhiloop->updateRHIResourcesStep(m_vparams); // will call Visitor for updating RHI resources for RHIVisualModels and Other BaseObjects
 
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
@@ -955,7 +971,7 @@ void RHIViewer::drawScene()
         if (m_vparams->sceneBBox().isValid())
             m_drawTool->drawBoundingBox(m_vparams->sceneBBox().minBBox(), m_vparams->sceneBBox().maxBBox());
 
-        m_drawTool->drawCylinder({ 0.0, 0.0, 0.0 }, { 0.0, 30.0, 0.0 }, 10, { 1.0, 0.0, 0.0, 1.0 });
+        //m_drawTool->drawCylinder({ 0.0, 0.0, 0.0 }, { 0.0, 30.0, 0.0 }, 10, { 1.0, 0.0, 0.0, 1.0 });
 
     }
     

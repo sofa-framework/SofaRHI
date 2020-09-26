@@ -1,5 +1,6 @@
 #include <SofaRHI/RHIVisualManagerLoop.h>
 #include <SofaRHI/RHIVisualVisitor.h>
+#include <SofaRHI/RHIComputeVisitor.h>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/visual/VisualParams.h>
@@ -50,7 +51,7 @@ void RHIVisualManagerLoop::initStep(sofa::core::ExecParams* params)
 
     RHIVisualDrawInitResourcesVisitor initVisitor(vparams);
     gRoot->execute(&initVisitor);
-    
+
     // Do a visual update now as it is not done in load() anymore
     /// \todo Separate this into another method?
     gRoot->execute<sofa::simulation::VisualUpdateVisitor>(params);
@@ -131,6 +132,29 @@ void RHIVisualManagerLoop::computeBBoxStep(sofa::core::visual::VisualParams* vpa
         if ((SReal)(act.maxBBox[1]) > maxBBox[1] ) maxBBox[1] = (SReal)(act.maxBBox[1]);
         if ((SReal)(act.maxBBox[2]) > maxBBox[2] ) maxBBox[2] = (SReal)(act.maxBBox[2]);
     }
+}
+
+void RHIVisualManagerLoop::initComputeCommandsStep(sofa::core::visual::VisualParams* vparams)
+{
+    if (!gRoot) return;
+
+    RHIComputeInitResourcesVisitor compInitVisitor(vparams);
+    gRoot->execute(&compInitVisitor);
+}
+
+void RHIVisualManagerLoop::updateComputeResourcesStep(sofa::core::visual::VisualParams* vparams)
+{
+    if (!gRoot) return;
+
+    RHIComputeUpdateResourcesVisitor compUpdateResVisitor(vparams);
+    gRoot->execute(&compUpdateResVisitor);
+}
+void RHIVisualManagerLoop::updateComputeCommandsStep(sofa::core::visual::VisualParams* vparams)
+{
+    if (!gRoot) return;
+
+    RHIComputeUpdateCommandsVisitor compUpdateComVisitor(vparams);
+    gRoot->execute(&compUpdateComVisitor);
 }
 
 } // namespace sofa::rhi

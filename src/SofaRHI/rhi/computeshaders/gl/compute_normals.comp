@@ -1,0 +1,33 @@
+#version 440
+
+layout (local_size_x = 256) in;
+
+
+layout(std140, binding = 0) buffer VertexStorageBuffer
+{
+    vec3 v[];
+} s_vertices;
+
+layout(std140, binding = 1) buffer NormalStorageBuffer
+{
+    vec3 n[];
+} s_normals;
+
+// layout(std140, binding = 1) uniform UniformBuffer
+// {
+//     float step;
+//     uint count;
+// } ubuf;
+
+void main()
+{
+    uint v_index = gl_GlobalInvocationID.x * 3;
+    uint n_index = gl_GlobalInvocationID.x;
+
+    vec3 v0 = s_vertices.v[v_index];
+    vec3 v1 = s_vertices.v[v_index + 1];
+    vec3 v2 = s_vertices.v[v_index + 2];
+
+    s_normals.n[n_index] = cross(v1-v0, v2-v0);
+
+}

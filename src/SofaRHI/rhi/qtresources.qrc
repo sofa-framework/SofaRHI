@@ -11,6 +11,6 @@
         <file>shaders/gl/phong_diffuse_texture.frag.qsb</file>
         <file>shaders/gl/simple_color.vert.qsb</file>
         <file>shaders/gl/simple_color.frag.qsb</file>
-
+        <file>computeshaders/gl/compute_normals.comp.qsb</file>
     </qresource>
 </RCC>

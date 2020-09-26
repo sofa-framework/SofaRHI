@@ -762,6 +762,125 @@ void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& view
 
 }
 
+void RHIModel::updateStorageBuffer(QRhiResourceUpdateBatch* batch)
+{
+    const auto& vertices = this->getVertices();
+    const auto& triangles = this->getTriangles();
+
+    std::vector<sofa::defaulttype::Vec3f> verticesFromTriangles;
+    verticesFromTriangles.reserve(triangles.size() * 3);
+    for (const auto& t : triangles)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            verticesFromTriangles.push_back({ float(vertices[t[i]][0]), float(vertices[t[i]][1]), float(vertices[t[i]][2]) });
+        }
+    }
+    const int verticesFromTrianglesSize = int(verticesFromTriangles.size()) * 3 * sizeof(float);
+    const int normalsSize = int(vertices.size()) * 3 * sizeof(float);
+
+    if (m_storageBuffer->size() == 0)
+    {
+        m_storageBuffer->setSize(verticesFromTrianglesSize);
+        batch->uploadStaticBuffer(m_storageBuffer, 0, verticesFromTrianglesSize, verticesFromTriangles.data());
+
+        if (!m_storageBuffer->build())
+        {
+            msg_error() << "Problem while building storage buffer";
+        }
+    }
+    else
+    {
+        //assert that the size is good, etc
+        batch->uploadStaticBuffer(m_storageBuffer, 0, verticesFromTrianglesSize, verticesFromTriangles.data());
+    }
+
+    //set size for the resulting normals
+    if(m_computeNormalBuffer->size() == 0)
+    {
+        m_computeNormalBuffer->setSize(normalsSize);
+        if (!m_computeNormalBuffer->build())
+        {
+            msg_error() << "Problem while building compute normal buffer";
+        }
+    }
+
+}
+
+bool RHIModel::initComputeResources(QRhiPtr rhi)
+{
+    m_storageBuffer = rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::StorageBuffer, 4); // cannot be empty at creation
+    if (!m_storageBuffer->build())
+    {
+        msg_error() << "Problem while building storage buffer";
+    }
+    m_computeNormalBuffer = rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::StorageBuffer | QRhiBuffer::VertexBuffer, 4); // cannot be empty at creation
+    if (!m_computeNormalBuffer->build())
+    {
+        msg_error() << "Problem while building compute normal buffer";
+    }
+    //m_computeUniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, COMPUTE_UBUF_SIZE);
+    //m_computeUniformBuffer.computeUniBuf->build();
+
+    //ComputeUBuf ud;
+    //ud.step = d.step;
+    //ud.count = DATA_COUNT;
+    //d.initialUpdates->updateDynamicBuffer(d.computeUniBuf, 0, COMPUTE_UBUF_SIZE, &ud);
+
+    m_computeBindings = rhi->newShaderResourceBindings();
+    m_computeBindings->setBindings({
+                                      QRhiShaderResourceBinding::bufferLoadStore(0, QRhiShaderResourceBinding::ComputeStage, m_storageBuffer),
+                                      QRhiShaderResourceBinding::bufferLoadStore(1, QRhiShaderResourceBinding::ComputeStage, m_computeNormalBuffer),
+                                       //QRhiShaderResourceBinding::uniformBuffer(1, QRhiShaderResourceBinding::ComputeStage, m_computeUniformBuffer)
+        });
+    if (!m_computeBindings->build())
+    {
+        msg_error() << "Problem while building compute bindings";
+        return false;
+    }
+
+    QShader cs = utils::loadShader(":/computeshaders/gl/compute_normals.comp.qsb");
+    if (!cs.isValid())
+    {
+        msg_error("RHIModel") << "Problem while cs shader";
+        return false;
+    }
+    m_computePipeline = rhi->newComputePipeline();
+    m_computePipeline->setShaderResourceBindings(m_computeBindings);
+    m_computePipeline->setShaderStage({ QRhiShaderStage::Compute, cs });
+    if (!m_computePipeline->build())
+    {
+        msg_error() << "Problem while building compute pipeline";
+        return false;
+    }
+
+    return true;
+}
+void RHIModel::updateComputeResources(QRhiResourceUpdateBatch* batch)
+{
+    if (m_storageBuffer == nullptr || m_computeNormalBuffer == nullptr)
+        return;
+
+    if (batch == nullptr)
+        return;
+
+    //Update Buffers (on demand)
+    if (m_needUpdatePositions || m_needUpdateTopology) // true when a new step is done
+    {
+        //will be updated all the time (camera, light and no step)
+        updateStorageBuffer(batch);
+    }
+
+}
+void RHIModel::updateComputeCommands(QRhiCommandBuffer* cb) 
+{
+    const int sizeLocalGroup = 256;
+    ////Create commands
+    cb->setComputePipeline(m_computePipeline);
+    cb->setShaderResources();
+    cb->dispatch(m_computeNormalBuffer->size() / sizeLocalGroup, 1, 1);
+}
+
 SOFA_DECL_CLASS(RHIModel)
 
 int RHIModelClass = core::RegisterObject("RHIModel")

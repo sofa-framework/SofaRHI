@@ -5,6 +5,14 @@
 #include <QtGui/private/qrhi_p.h>
 #include <array>
 
+namespace sofa::rhi
+{
+    using QRhiPtr = std::shared_ptr<QRhi>;
+    using QRhiCommandBufferPtr = std::shared_ptr<QRhiCommandBuffer>;
+    using QRhiResourceUpdateBatchPtr = std::shared_ptr<QRhiResourceUpdateBatch>;
+    using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
+}
+
 namespace sofa::rhi::utils
 {
     using Vector3 = std::array<float, 3>;
