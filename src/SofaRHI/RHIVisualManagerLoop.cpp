@@ -49,7 +49,7 @@ void RHIVisualManagerLoop::initStep(sofa::core::ExecParams* params)
     //I DONT UNDERSTAND WHY THERE IS NO VISUALPARAMS IN A VISUAL INITIALIZATION !111!!!
     auto vparams = sofa::core::visual::VisualParams::defaultInstance();
 
-    RHIVisualDrawInitResourcesVisitor initVisitor(vparams);
+    RHIGraphicInitResourcesVisitor initVisitor(vparams);
     gRoot->execute(&initVisitor);
 
     // Do a visual update now as it is not done in load() anymore
@@ -79,7 +79,7 @@ void RHIVisualManagerLoop::updateRHIResourcesStep(sofa::core::visual::VisualPara
     simulation::Visitor::printNode("UpdateRHIResources");
 #endif
 
-    RHIVisualDrawUpdateResourcesVisitor updateVisitor(vparams);
+    RHIGraphicUpdateResourcesVisitor updateVisitor(vparams);
     gRoot->execute(&updateVisitor);
 
 #ifdef SOFA_DUMP_VISITOR_INFO
@@ -103,7 +103,7 @@ void RHIVisualManagerLoop::drawStep(sofa::core::visual::VisualParams* vparams)
     vparams->pass() = sofa::core::visual::VisualParams::Std;
 
     // RHI
-    RHIVisualDrawUpdateCommandsVisitor act ( vparams );
+    RHIGraphicUpdateCommandsVisitor act ( vparams );
     act.setTags(this->getTags());
     gRoot->execute ( &act );
 }

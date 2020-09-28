@@ -6,14 +6,14 @@ namespace sofa::rhi
 {
 
 
-sofa::simulation::Visitor::Result RHIVisualDrawInitResourcesVisitor::processNodeTopDown(simulation::Node* node)
+sofa::simulation::Visitor::Result RHIGraphicInitResourcesVisitor::processNodeTopDown(simulation::Node* node)
 {
-    for_each(this, node, node->object, &RHIVisualDrawInitResourcesVisitor::processObject);
+    for_each(this, node, node->object, &RHIGraphicInitResourcesVisitor::processObject);
 
     return RESULT_CONTINUE;
 }
 
-void RHIVisualDrawInitResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
+void RHIGraphicInitResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
     //not very efficient but node does not store RHIGraphicModel, contrary to VisualModel
     RHIGraphicModel* rgm = dynamic_cast<RHIGraphicModel*>(o);
@@ -32,48 +32,48 @@ void RHIVisualDrawInitResourcesVisitor::processObject(simulation::Node* /*node*/
 }
 
 
-sofa::simulation::Visitor::Result RHIVisualDrawUpdateResourcesVisitor::processNodeTopDown(simulation::Node* node)
+sofa::simulation::Visitor::Result RHIGraphicUpdateResourcesVisitor::processNodeTopDown(simulation::Node* node)
 {
     //Preliminary: call fwdDraw of all VisualStyle
 
     std::vector<VisualStyle*> vstyles;
     node->get<VisualStyle, std::vector<VisualStyle*> >(&vstyles, sofa::core::objectmodel::BaseContext::Local);
 
-    //for_each(this, node, vstyles, &RHIVisualDrawUpdateResourcesVisitor::processFwdVisualStyle); //lol
+    //for_each(this, node, vstyles, &RHIGraphicUpdateResourcesVisitor::processFwdVisualStyle); //lol
     for (auto& vstyle : vstyles)
     {
         vstyle->fwdDraw(m_vparams);
     }
 
-    for_each(this, node, node->object, &RHIVisualDrawUpdateResourcesVisitor::processObject);
+    for_each(this, node, node->object, &RHIGraphicUpdateResourcesVisitor::processObject);
 
     return RESULT_CONTINUE;
 }
 
 
-void RHIVisualDrawUpdateResourcesVisitor::processNodeBottomUp(simulation::Node* node)
+void RHIGraphicUpdateResourcesVisitor::processNodeBottomUp(simulation::Node* node)
 {
     //call bwdDraw of all VisualStyle
     std::vector<VisualStyle*> vstyles;
     node->get<VisualStyle, std::vector<VisualStyle*> >(&vstyles, sofa::core::objectmodel::BaseContext::Local);
 
-    //for_each(this, node, vstyles, &RHIVisualDrawUpdateResourcesVisitor::processBwdVisualStyle); // lol
+    //for_each(this, node, vstyles, &RHIGraphicUpdateResourcesVisitor::processBwdVisualStyle); // lol
     for (auto& vstyle : vstyles)
     {
         vstyle->bwdDraw(m_vparams);
     }
 }
 
-void RHIVisualDrawUpdateResourcesVisitor::processFwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs)
+void RHIGraphicUpdateResourcesVisitor::processFwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs)
 {
     vs->fwdDraw(m_vparams);
 }
-void RHIVisualDrawUpdateResourcesVisitor::processBwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs)
+void RHIGraphicUpdateResourcesVisitor::processBwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs)
 {
     vs->bwdDraw(m_vparams);
 }
 
-void RHIVisualDrawUpdateResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
+void RHIGraphicUpdateResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
     RHIGraphicModel* rgm = dynamic_cast<RHIGraphicModel*>(o);
 
@@ -97,14 +97,14 @@ void RHIVisualDrawUpdateResourcesVisitor::processObject(simulation::Node* /*node
 
 }
 
-sofa::simulation::Visitor::Result RHIVisualDrawUpdateCommandsVisitor::processNodeTopDown(simulation::Node* node)
+sofa::simulation::Visitor::Result RHIGraphicUpdateCommandsVisitor::processNodeTopDown(simulation::Node* node)
 {
-    for_each(this, node, node->object, &RHIVisualDrawUpdateCommandsVisitor::processObject);
+    for_each(this, node, node->object, &RHIGraphicUpdateCommandsVisitor::processObject);
 
     return RESULT_CONTINUE;
 }
 
-void RHIVisualDrawUpdateCommandsVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
+void RHIGraphicUpdateCommandsVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
     RHIGraphicModel* rvm = dynamic_cast<RHIGraphicModel*>(o);
 

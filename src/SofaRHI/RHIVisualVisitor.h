@@ -15,7 +15,7 @@ namespace sofa::component::visualmodel
 namespace sofa::rhi
 {
 
-class SOFA_SOFARHI_API RHIVisualDrawVisitor : public sofa::simulation::Visitor
+class SOFA_SOFARHI_API RHIGraphicVisitor : public sofa::simulation::Visitor
 {
 public:
     using QRhiPtr = std::shared_ptr<QRhi>;
@@ -23,7 +23,7 @@ public:
     using QRhiResourceUpdateBatchPtr = std::shared_ptr<QRhiResourceUpdateBatch>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
 
-    RHIVisualDrawVisitor(core::visual::VisualParams* params)
+    RHIGraphicVisitor(core::visual::VisualParams* params)
         : sofa::simulation::Visitor(params)
         , m_rhiDrawTool(nullptr)
     {
@@ -35,7 +35,7 @@ public:
     virtual void processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o) = 0;
 
     const char* getCategoryName() const override { return "visual"; }
-    const char* getClassName() const override { return "RHIVisualVisitor"; }
+    const char* getClassName() const override { return "RHIGraphicVisitor"; }
 
     /// qt3d visual visitor must be executed as a tree, such as forward and backward orders are coherent
     bool treeTraversal(TreeTraversalRepetition& repeat) override { repeat=NO_REPETITION; return true; }
@@ -45,26 +45,26 @@ protected:
 
 };
 
-class SOFA_SOFARHI_API RHIVisualDrawInitResourcesVisitor : public RHIVisualDrawVisitor
+class SOFA_SOFARHI_API RHIGraphicInitResourcesVisitor : public RHIGraphicVisitor
 {
 public:
-    RHIVisualDrawInitResourcesVisitor(core::visual::VisualParams* params)
-        : RHIVisualDrawVisitor(params) {}
+    RHIGraphicInitResourcesVisitor(core::visual::VisualParams* params)
+        : RHIGraphicVisitor(params) {}
 
     Result processNodeTopDown(simulation::Node* node) override;
     void processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o) override;
 
-    const char* getClassName() const override { return "RHIVisualDrawInitResourcesVisitor"; }
+    const char* getClassName() const override { return "RHIGraphicInitResourcesVisitor"; }
 
 };
 
-class SOFA_SOFARHI_API RHIVisualDrawUpdateResourcesVisitor : public RHIVisualDrawVisitor
+class SOFA_SOFARHI_API RHIGraphicUpdateResourcesVisitor : public RHIGraphicVisitor
 {
 public:
     using VisualStyle = component::visualmodel::VisualStyle;
 
-    RHIVisualDrawUpdateResourcesVisitor(core::visual::VisualParams* params)
-        : RHIVisualDrawVisitor(params) {}
+    RHIGraphicUpdateResourcesVisitor(core::visual::VisualParams* params)
+        : RHIGraphicVisitor(params) {}
 
     Result processNodeTopDown(simulation::Node* node) override;
     void processNodeBottomUp(simulation::Node* node) override;
@@ -72,19 +72,19 @@ public:
     void processFwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs);
     void processBwdVisualStyle(simulation::Node* /*node*/, VisualStyle* vs);
 
-    const char* getClassName() const override { return "RHIVisualDrawUpdateResourcesVisitor"; }
+    const char* getClassName() const override { return "RHIGraphicUpdateResourcesVisitor"; }
 };
 
-class SOFA_SOFARHI_API RHIVisualDrawUpdateCommandsVisitor : public RHIVisualDrawVisitor
+class SOFA_SOFARHI_API RHIGraphicUpdateCommandsVisitor : public RHIGraphicVisitor
 {
 public:
-    RHIVisualDrawUpdateCommandsVisitor(core::visual::VisualParams* params)
-        : RHIVisualDrawVisitor(params) {}
+    RHIGraphicUpdateCommandsVisitor(core::visual::VisualParams* params)
+        : RHIGraphicVisitor(params) {}
 
     Result processNodeTopDown(simulation::Node* node) override;
     void processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o) override;
 
-    const char* getClassName() const override { return "RHIVisualDrawUpdateCommandsVisitor"; }
+    const char* getClassName() const override { return "RHIGraphicUpdateCommandsVisitor"; }
 };
 
 } // namespace sofa::rhi
