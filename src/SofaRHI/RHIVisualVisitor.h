@@ -5,7 +5,7 @@
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/simulation/Visitor.h>
 #include <SofaRHI/DrawToolRHI.h>
-#include <SofaRHI/RHIVisualModel.h>
+#include <SofaRHI/RHIGraphicModel.h>
 
 namespace sofa::component::visualmodel
 {

@@ -29,7 +29,7 @@ set(HEADER_FILES
     ${SOFARHI_SRC_DIR}/RHIUtils.h
     ${SOFARHI_SRC_DIR}/RHIMeshGenerator.h
     ${SOFARHI_SRC_DIR}/RHIMeshGenerator.inl
-    ${SOFARHI_SRC_DIR}/RHIVisualModel.h
+    ${SOFARHI_SRC_DIR}/RHIGraphicModel.h
     ${SOFARHI_SRC_DIR}/RHIComputeModel.h
     ${SOFARHI_SRC_DIR}/RHIModel.h
     ${SOFARHI_SRC_DIR}/DrawToolRHI.h

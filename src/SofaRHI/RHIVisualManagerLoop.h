@@ -4,7 +4,7 @@
 
 #include <sofa/core/visual/VisualLoop.h>
 #include <sofa/simulation/Node.h>
-#include <SofaRHI/RHIVisualModel.h>
+#include <SofaRHI/RHIGraphicModel.h>
 
 namespace sofa::rhi
 {
