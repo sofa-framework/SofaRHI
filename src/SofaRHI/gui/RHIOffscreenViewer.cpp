@@ -423,6 +423,7 @@ int RHIOffscreenViewer::mainLoop()
             {
                 sofa::helper::ScopedAdvancedTimer("Animate");
                 sofa::simulation::getSimulation()->animate(m_groot.get());
+                simulation::getSimulation()->updateVisual(m_groot.get());
 
                 updateVisualParameters();
                 drawScene();
