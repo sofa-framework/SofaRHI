@@ -9,6 +9,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/Simulation.h>
 #include <sofa/simulation/UpdateContextVisitor.h>
+#include <SofaBaseVisual/VisualStyle.h>
 
 #include <sofa/gui/GUIManager.h>
 
@@ -42,7 +43,7 @@ Q_DECLARE_METATYPE(QRhiInitParams*)
 namespace sofa::rhi
 {
 
-const int RHIOffscreenViewer::DEFAULT_NUMBER_OF_ITERATIONS = 1000;
+const int RHIOffscreenViewer::DEFAULT_NUMBER_OF_ITERATIONS = 50;
 int RHIOffscreenViewer::s_nbIterations = RHIOffscreenViewer::DEFAULT_NUMBER_OF_ITERATIONS;
 
 enum class GraphicsAPI
@@ -179,15 +180,27 @@ RHIOffscreenViewer::RHIOffscreenViewer()
         //exit
     }
 
-    m_offscreenTexture = m_rhi->newTexture(QRhiTexture::RGBA8, QSize(1280, 720), 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource);
-    m_offscreenTexture->build();
-    m_offscreenTextureRenderTarget = m_rhi->newTextureRenderTarget({ m_offscreenTexture });
+    // as a parameter
+    const int outputWidth = 1280;
+    const int outputHeight = 720;
+
+    m_offscreenTexture = m_rhi->newTexture(QRhiTexture::RGBA8, QSize(outputWidth, outputHeight), 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource);
+    if (!m_offscreenTexture->build())
+    {
+        qFatal("Failed to create Offscreen texture, quitting.");
+    }
+    
+    QRhiRenderBuffer* ds = m_rhi->newRenderBuffer(QRhiRenderBuffer::DepthStencil,
+        QSize(outputWidth, outputHeight), // no need to set the size yet
+        1);
+    ds->build();
+
+    m_offscreenTextureRenderTarget = m_rhi->newTextureRenderTarget({ m_offscreenTexture, ds });
     m_rpDesc.reset(m_offscreenTextureRenderTarget->newCompatibleRenderPassDescriptor());
     m_offscreenTextureRenderTarget->setRenderPassDescriptor(m_rpDesc.get());
     m_offscreenTextureRenderTarget->build();
 
-    // as a parameter
-    m_offscreenViewport.setViewport(0, 0, 1280, 720);
+    m_offscreenViewport.setViewport(0, 0, outputWidth, outputHeight);
 
     m_vparams = core::visual::VisualParams::defaultInstance();
     m_drawTool = new DrawToolRHI(m_rhi, m_rpDesc);
@@ -262,7 +275,7 @@ void RHIOffscreenViewer::updateVisualParameters()
     m_vparams->zFar() = m_currentCamera->getZFar();
 
     sofa::core::visual::VisualParams::Viewport vp{0, 0, int(m_offscreenViewport.viewport()[2]),  int(m_offscreenViewport.viewport()[3]) };
-    m_vparams->viewport() = vp;
+    //m_vparams->viewport() = vp;
     double projectionMatrix[16];
     double modelviewMatrix[16];
 
@@ -329,7 +342,7 @@ void RHIOffscreenViewer::drawScene()
     rbResult.completed = [this] { qDebug("  - readback %d completed", m_currentIterations); };
     updates->readBackTexture(rb, &rbResult);
 
-    cb->endPass();
+    cb->endPass(updates);
 
     m_drawTool->endFrame();
 
@@ -337,10 +350,11 @@ void RHIOffscreenViewer::drawScene()
 
     // The data should be ready either because endOffscreenFrame() waits
     // for completion or because finish() did.
-    if (!rbResult.data.isEmpty()) {
+    if (!rbResult.data.isEmpty()) 
+    {
         const uchar* p = reinterpret_cast<const uchar*>(rbResult.data.constData());
         QImage image(p, rbResult.pixelSize.width(), rbResult.pixelSize.height(), QImage::Format_RGBA8888);
-        QString fn = QString::asprintf("frame%d.png", s_nbIterations);
+        QString fn = QString::asprintf("frame%d.png", m_currentIterations);
         fn = QFileInfo(fn).absoluteFilePath();
         qDebug("Saving into %s", qPrintable(fn));
         if (m_rhi->isYUpInFramebuffer())
@@ -348,7 +362,8 @@ void RHIOffscreenViewer::drawScene()
         else
             image.save(fn);
     }
-    else {
+    else 
+    {
         qWarning("Readback failed!");
     }
 
@@ -409,6 +424,7 @@ int RHIOffscreenViewer::mainLoop()
                 sofa::helper::ScopedAdvancedTimer("Animate");
                 sofa::simulation::getSimulation()->animate(m_groot.get());
 
+                updateVisualParameters();
                 drawScene();
             }
 
@@ -449,6 +465,31 @@ void RHIOffscreenViewer::setScene(sofa::simulation::Node::SPtr groot, const char
 {
     this->m_groot = groot;
     this->m_filename = (filename ? filename : "");
+
+    m_groot->get(m_currentCamera);
+    if (!m_currentCamera)
+    {
+        m_currentCamera = sofa::core::objectmodel::New<component::visualmodel::InteractiveCamera>();
+        m_currentCamera->setName(core::objectmodel::Base::shortName(m_currentCamera.get()));
+        groot->addObject(m_currentCamera);
+        m_currentCamera->bwdInit();
+    }
+    component::visualmodel::VisualStyle::SPtr visualStyle = nullptr;
+    groot->get(visualStyle);
+    if (!visualStyle)
+    {
+        visualStyle = sofa::core::objectmodel::New<component::visualmodel::VisualStyle>();
+        visualStyle->setName(sofa::helper::NameDecoder::getShortName<decltype(visualStyle.get())>());
+
+        core::visual::DisplayFlags* displayFlags = visualStyle->displayFlags.beginEdit();
+        displayFlags->setShowVisualModels(sofa::core::visual::tristate::true_value);
+        visualStyle->displayFlags.endEdit();
+
+        groot->addObject(visualStyle);
+        visualStyle->init();
+    }
+
+    m_currentCamera->setBoundingBox(groot->f_bbox.getValue().minBBox(), groot->f_bbox.getValue().maxBBox());
 
     resetScene();
 }

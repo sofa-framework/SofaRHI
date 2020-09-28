@@ -2,7 +2,7 @@
 
 #include <SofaRHI/config.h>
 
-#include <SofaRHI/RHIVisualModel.h>
+#include <SofaRHI/RHIGraphicModel.h>
 #include <SofaRHI/RHIComputeModel.h>
 #include <SofaRHI/RHIUtils.h>
 #include <SofaBaseVisual/VisualModelImpl.h>

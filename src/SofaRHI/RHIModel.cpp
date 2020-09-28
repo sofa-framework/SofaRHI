@@ -514,6 +514,7 @@ void RHIModel::updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch)
     {
         msg_error() << "Problem while building camera uniform buffer";
     }
+
 }
 
 bool RHIModel::initGraphicResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
