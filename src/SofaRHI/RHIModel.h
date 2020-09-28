@@ -3,6 +3,7 @@
 #include <SofaRHI/config.h>
 
 #include <SofaRHI/RHIVisualModel.h>
+#include <SofaRHI/RHIComputeModel.h>
 #include <SofaRHI/RHIUtils.h>
 #include <SofaBaseVisual/VisualModelImpl.h>
 #include <sofa/core/DataTracker.h>
@@ -110,7 +111,7 @@ public:
 private:
 };
 
-class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIVisualModel
+class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIVisualModel, public RHIComputeModel
 {
 public:
     SOFA_CLASS(RHIModel,  sofa::component::visualmodel::VisualModelImpl);
@@ -130,6 +131,11 @@ public:
     bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
     void updateRHIResources(QRhiResourceUpdateBatch* batch);
     void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport);
+
+    // RHIComputeModel API
+    bool initComputeResources(QRhiPtr rhi);
+    void updateComputeResources(QRhiResourceUpdateBatch* batch);
+    void updateComputeCommands(QRhiCommandBuffer* cb);
 
 private:
     void internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent) override;
@@ -160,6 +166,15 @@ private:
 
     std::vector<std::shared_ptr<RHIRendering> > m_renderGroups;
     std::vector<std::shared_ptr<RHIWireframeRendering> > m_wireframeGroups;
+
+    //Compute
+    QRhiBuffer* m_storageBuffer = nullptr;
+    QRhiBuffer* m_computeNormalBuffer = nullptr;
+    QRhiBuffer* m_computeUniformBuffer = nullptr;
+    QRhiShaderResourceBindings* m_computeBindings = nullptr;
+    QRhiComputePipeline* m_computePipeline = nullptr;
+
+    void updateStorageBuffer(QRhiResourceUpdateBatch* batch);
 };
 
 } // namespace sofa::rhi
