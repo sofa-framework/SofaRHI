@@ -1,4 +1,4 @@
-#include <SofaRHI/RHIVisualVisitor.h>
+#include <SofaRHI/RHIGraphicVisitor.h>
 
 #include <SofaBaseVisual/VisualStyle.h>
 

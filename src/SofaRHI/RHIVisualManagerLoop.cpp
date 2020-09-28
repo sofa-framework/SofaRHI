@@ -1,5 +1,6 @@
 #include <SofaRHI/RHIVisualManagerLoop.h>
-#include <SofaRHI/RHIVisualVisitor.h>
+
+#include <SofaRHI/RHIGraphicVisitor.h>
 #include <SofaRHI/RHIComputeVisitor.h>
 
 #include <sofa/core/ObjectFactory.h>
