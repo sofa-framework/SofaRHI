@@ -22,10 +22,10 @@
 #if QT_CONFIG(opengl)
 # include <QOpenGLContext>
 # include <QtGui/private/qrhigles2_p.h>
-# define TST_GL
 #endif
 
-#if QT_CONFIG(vulkan)
+#if QT_CONFIG(vulkan) && Vulkan_FOUND
+# define VIEWER_USE_VULKAN 1
 # include <QVulkanInstance>
 # include <QtGui/private/qrhivulkan_p.h>
 #endif
@@ -91,9 +91,9 @@ int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParse
 
     supportedAPIs.emplace_back(defaultStr);
 #endif // Q_OS_LINUX || Q_OS_ANDROID
-#if QT_CONFIG(vulkan)
+#if VIEWER_USE_VULKAN
     supportedAPIs.emplace_back("vlk");
-#endif // QT_CONFIG(vulkan)
+#endif // VIEWER_USE_VULKAN
 
     std::ostringstream displayChoice;
     displayChoice << "select graphics API between: " ;
@@ -157,7 +157,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
         msg_info("RHIViewer") << "Will use Metal";
     }
 #endif // Q_OS_DARWIN
-#if QT_CONFIG(vulkan)
+#if VIEWER_USE_VULKAN
     if (graphicsAPI == QRhi::Vulkan)
     {
         // Vulkan setup.
@@ -170,7 +170,7 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
         m_window->setVulkanInstance(&inst);
         msg_info("RHIViewer") << "Will use Vulkan";
     }
-#endif // QT_CONFIG(vulkan)
+#endif // VIEWER_USE_VULKAN
 
     if (!m_rhi)
     {

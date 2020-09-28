@@ -53,7 +53,7 @@ find_package(SofaBase REQUIRED)
 find_package(SofaGui REQUIRED)
 
 if(Vulkan_FOUND)
-    message(STATUS "Vulkan detected, enabling Vulkan specific code (if you compilec QT with vulkan)." )
+    message(STATUS "Vulkan detected, enabling Vulkan specific code (if you compiled QT with vulkan)." )
 else()
     message(STATUS "No support for Vulkan detected, disabling Vulkan specific code." )
 endif()

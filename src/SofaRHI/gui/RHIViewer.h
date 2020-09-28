@@ -1,5 +1,9 @@
 #pragma once
 
+#include <SofaRHI/DrawToolRHI.h>
+#include <SofaRHI/gui/RHIBackend.h>
+#include <SofaRHI/RHIVisualManagerLoop.h>
+
 #include <sofa/gui/qt/viewer/SofaViewer.h>
 #include <sofa/gui/ViewerFactory.h>
 
@@ -8,10 +12,6 @@
 #include <sofa/helper/ArgumentParser.h>
 
 #include <SofaSimulationCommon/xml/Element.h>
-
-#include <SofaRHI/DrawToolRHI.h>
-#include <SofaRHI/gui/RHIBackend.h>
-#include <SofaRHI/RHIVisualManagerLoop.h>
 
 #include <QtGui/private/qrhi_p.h>
 #include <QtGui/private/qrhinull_p.h>

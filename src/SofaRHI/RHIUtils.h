@@ -4,6 +4,7 @@
 
 #include <QtGui/private/qrhi_p.h>
 #include <array>
+#include <cmath>
 
 namespace sofa::rhi::utils
 {
@@ -73,7 +74,7 @@ namespace sofa::rhi::utils
         nz = ex1 * ey2 - ey1 * ex2;
 
         // normalize only if the length is > 0
-        Real length = sqrtf(nx * nx + ny * ny + nz * nz);
+        Real length = std::sqrt(nx * nx + ny * ny + nz * nz);
         if (length > EPSILON)
         {
             // normalize

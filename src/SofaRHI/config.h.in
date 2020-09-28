@@ -10,3 +10,5 @@
 #else
 #  define SOFA_SOFARHI_API SOFA_IMPORT_DYNAMIC_LIBRARY
 #endif
+
+#cmakedefine01 Vulkan_FOUND
