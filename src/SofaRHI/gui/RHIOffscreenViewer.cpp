@@ -40,7 +40,7 @@ Q_DECLARE_METATYPE(QRhiInitParams*)
 
 
 
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
 
 const int RHIOffscreenViewer::DEFAULT_NUMBER_OF_ITERATIONS = 50;
@@ -568,4 +568,4 @@ void RHIOffscreenViewer::setNumIterations(const std::string& nbIterInp)
 int RHIOffscreenGUIClass = sofa::gui::GUIManager::RegisterGUI("rhi_offscreen", &RHIOffscreenViewer::CreateGUI, &RHIOffscreenViewer::RegisterGUIParameters, 4);
 
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui

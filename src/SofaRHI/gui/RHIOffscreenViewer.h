@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SofaRHI/DrawToolRHI.h>
-#include <SofaRHI/gui/RHIBackend.h>
 #include <SofaRHI/RHIVisualManagerLoop.h>
 
 #include <sofa/gui/BaseGUI.h>
@@ -15,7 +14,7 @@
 #include <QOffscreenSurface>
 #include <QPainter>
 
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
 
 class SOFA_SOFARHI_API RHIOffscreenViewer : public sofa::gui::BaseGUI
@@ -86,4 +85,4 @@ private:
 
 
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui

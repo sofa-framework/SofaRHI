@@ -1,5 +1,6 @@
 #include <SofaRHI/gui/RHIViewer.h>
 
+#include <SofaRHI/gui/RHIGUIUtils.h>
 #include <SofaRHI/RHIVisualManagerLoop.h>
 
 #include <sofa/helper/system/FileRepository.h>
@@ -18,51 +19,13 @@
 #include <sofa/helper/system/PluginManager.h>
 #include <fstream>
 
-#include <QtGui/private/qshader_p.h>
-#if QT_CONFIG(opengl)
-# include <QOpenGLContext>
-# include <QtGui/private/qrhigles2_p.h>
-#endif
-
-#if QT_CONFIG(vulkan) && Vulkan_FOUND
-# define VIEWER_USE_VULKAN 1
-# include <QVulkanInstance>
-# include <QtGui/private/qrhivulkan_p.h>
-#endif
-
-#ifdef Q_OS_WIN
-#include <QtGui/private/qrhid3d11_p.h>
-#endif
-
-#ifdef Q_OS_DARWIN
-# include <QtGui/private/qrhimetal_p.h>
-#endif
-
-Q_DECLARE_METATYPE(QRhi::Implementation)
-Q_DECLARE_METATYPE(QRhiInitParams*)
-
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
 
 using sofa::simulation::getSimulation;
 using sofa::defaulttype::Vector3;
 using sofa::defaulttype::Quat;
 
-enum class GraphicsAPI
-{
-    OpenGL,
-    Vulkan,
-    D3D11,
-    Metal
-};
-
-static std::map<std::string, std::pair<QRhi::Implementation, std::string> > s_mapGraphicsAPI
-{
-    { "ogl", { QRhi::OpenGLES2, "OpenGL Core" } },
-    { "vlk", { QRhi::Vulkan, "Vulkan"} },
-    { "d3d", { QRhi::D3D11, "Direct3D 11"} },
-    { "mtl", { QRhi::Metal, "Metal"} }
-};
 
 std::string RHIViewer::s_keyGgraphicsAPI = {"ogl"};
 
@@ -72,28 +35,8 @@ const std::string RHIViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
 int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
 {
-    static std::vector<std::string> supportedAPIs;
-    
-#ifdef Q_OS_WIN
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-    supportedAPIs.emplace_back("d3d");
-#endif // Q_OS_WIN
-#ifdef Q_OS_DARWIN //ios or mac
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-    supportedAPIs.emplace_back("mtl");
-#endif // Q_OS_DARWIN
-#if defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-#endif // Q_OS_LINUX || Q_OS_ANDROID
-#if VIEWER_USE_VULKAN
-    supportedAPIs.emplace_back("vlk");
-#endif // VIEWER_USE_VULKAN
+    const std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
+    const std::string defaultStr = supportedAPIs[0];
 
     std::ostringstream displayChoice;
     displayChoice << "select graphics API between: " ;
@@ -104,8 +47,8 @@ int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParse
     argumentParser->addArgument(
         boost::program_options::value<std::string>(&s_keyGgraphicsAPI)
         ->default_value(defaultStr)
-        ->notifier([](const std::string value) {
-            if (std::find(supportedAPIs.begin(), supportedAPIs.end(), value) != supportedAPIs.end())
+        ->notifier([supportedAPIs, defaultStr](const std::string value) {
+            if (std::find(supportedAPIs.cbegin(), supportedAPIs.cend(), value) != supportedAPIs.end())
             {
                 msg_error("RHIViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
             }
@@ -123,10 +66,14 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     
     m_window = new QWindow();
 
+    //SofaRHI is loaded after argumentparser can be called
+    //so no way to call RegisterGUIParameters
+    //for now we select the Graphical API here.
+
     //s_keyGgraphicsAPI = "ogl";
     s_keyGgraphicsAPI = "d3d";
 
-    const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
+    const QRhi::Implementation graphicsAPI = sofa::rhi::gui::RHIGUIUtils::MapGraphicsAPI[s_keyGgraphicsAPI].first;
 
     //// RHI Setup
     QRhiInitParams* initParams = nullptr;
@@ -1113,4 +1060,4 @@ helper::SofaViewerCreator< RHIViewer> RHIViewer_class("rhi",false);
 int RHIGUIClass = sofa::gui::GUIManager::RegisterGUI ( "rhi", &sofa::gui::qt::RealGUI::CreateGUI, &RHIViewer::RegisterGUIParameters, 3 );
 
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui

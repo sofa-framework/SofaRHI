@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
 
 RHIBackend::RHIBackend(RHIViewer* rhiviewer)
@@ -66,4 +66,4 @@ const std::string RHIBackend::screenshotName()
     return filename;
 }
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui

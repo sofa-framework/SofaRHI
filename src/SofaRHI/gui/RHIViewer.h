@@ -19,7 +19,7 @@
 #include <QOffscreenSurface>
 #include <QPainter>
 
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
 
 class SOFA_SOFARHI_API RHIViewer
@@ -213,4 +213,4 @@ protected:
 };
 
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui

@@ -4,15 +4,14 @@
 #include <sofa/gui/qt/viewer/EngineBackend.h>
 
 
-namespace sofa::rhi
+namespace sofa::rhi::gui
 {
-
 class RHIViewer;
 
 class RHIBackend : public sofa::gui::qt::viewer::EngineBackend
 {
 public:
-    RHIBackend(RHIViewer* qt3dviewer);
+    RHIBackend(RHIViewer* rhiviewer);
     virtual ~RHIBackend() {}
 
     virtual void setPickingMethod(sofa::gui::PickHandler* pick, sofa::component::configurationsetting::ViewerSetting* viewerConf){}
@@ -32,7 +31,7 @@ private:
     int m_counter;
 };
 
-} // namespace sofa::rhi
+} // namespace sofa::rhi::gui
 
 
 
