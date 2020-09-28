@@ -15,17 +15,17 @@ sofa::simulation::Visitor::Result RHIVisualDrawInitResourcesVisitor::processNode
 
 void RHIVisualDrawInitResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
-    //not very efficient but node does not store RHIVisualModel, contrary to VisualModel
-    RHIVisualModel* rvm = dynamic_cast<RHIVisualModel*>(o);
+    //not very efficient but node does not store RHIGraphicModel, contrary to VisualModel
+    RHIGraphicModel* rgm = dynamic_cast<RHIGraphicModel*>(o);
 
-    if (rvm) // RHIVisualModel
+    if (rgm) // RHIGraphicModel
     {
         QRhiPtr rhi = m_rhiDrawTool->getRHI();
         QRhiRenderPassDescriptorPtr rpDesc = m_rhiDrawTool->getRenderPassDescriptor();
 
-        rvm->initRHIResources(rhi, rpDesc);
+        rgm->initGraphicResources(rhi, rpDesc);
     }
-    else // other than RHIVisualModel
+    else // other than RHIGraphicModel
     {
         // not init resources for the other types of objects whatsoever
     }
@@ -75,16 +75,15 @@ void RHIVisualDrawUpdateResourcesVisitor::processBwdVisualStyle(simulation::Node
 
 void RHIVisualDrawUpdateResourcesVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
+    RHIGraphicModel* rgm = dynamic_cast<RHIGraphicModel*>(o);
 
-    RHIVisualModel* rvm = dynamic_cast<RHIVisualModel*>(o);
-
-    if (rvm) // RHIVisualModel
+    if (rgm) // RHIGraphicModel
     {
         QRhiResourceUpdateBatch* batch = m_rhiDrawTool->getResourceUpdateBatch();
 
-        rvm->updateRHIResources(batch);
+        rgm->updateGraphicResources(batch);
     }
-    else // other than RHIVisualModel
+    else // other than RHIGraphicModel
     {
         // EXCEPTION: VisualStyle: we need its fwdDraw and bwdDraw
         VisualStyle* vstyle = dynamic_cast<VisualStyle*>(o);
@@ -107,16 +106,16 @@ sofa::simulation::Visitor::Result RHIVisualDrawUpdateCommandsVisitor::processNod
 
 void RHIVisualDrawUpdateCommandsVisitor::processObject(simulation::Node* /*node*/, core::objectmodel::BaseObject* o)
 {
-    RHIVisualModel* rvm = dynamic_cast<RHIVisualModel*>(o);
+    RHIGraphicModel* rvm = dynamic_cast<RHIGraphicModel*>(o);
 
-    if (rvm) // RHIVisualModel
+    if (rvm) // RHIGraphicModel
     {
         QRhiCommandBuffer* cb = m_rhiDrawTool->getCommandBuffer();
         const QRhiViewport& viewport = m_rhiDrawTool->getViewport();
 
-        rvm->updateRHICommands(cb, viewport);
+        rvm->updateGraphicCommands(cb, viewport);
     }
-    else // other than RHIVisualModel
+    else // other than RHIGraphicModel
     {
         // commands are done by the drawtool itself
     }

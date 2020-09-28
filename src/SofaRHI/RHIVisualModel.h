@@ -7,12 +7,12 @@
 namespace sofa::rhi
 {
 
-class SOFA_SOFARHI_API RHIVisualModel
+class SOFA_SOFARHI_API RHIGraphicModel
 {
 public:
-    virtual bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) = 0;
-    virtual void updateRHIResources(QRhiResourceUpdateBatch* batch) = 0;
-    virtual void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport) = 0;
+    virtual bool initGraphicResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) = 0;
+    virtual void updateGraphicResources(QRhiResourceUpdateBatch* batch) = 0;
+    virtual void updateGraphicCommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport) = 0;
 };
 
 

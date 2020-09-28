@@ -516,7 +516,7 @@ void RHIModel::updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch)
     }
 }
 
-bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
+bool RHIModel::initGraphicResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
 {
     // I suppose it would be better to get the visualParams given as params but it is only in update/draw steps
     rhi::DrawToolRHI* rhiDrawTool = dynamic_cast<rhi::DrawToolRHI*>(sofa::core::visual::VisualParams::defaultInstance()->drawTool());
@@ -666,7 +666,7 @@ bool RHIModel::initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc)
     return true;
 }
 
-void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
+void RHIModel::updateGraphicResources(QRhiResourceUpdateBatch* batch)
 {
     if (m_vertexPositionBuffer == nullptr)
     {
@@ -722,7 +722,7 @@ void RHIModel::updateRHIResources(QRhiResourceUpdateBatch* batch)
     }
 }
 
-void RHIModel::updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
+void RHIModel::updateGraphicCommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport)
 {
     auto vparams = sofa::core::visual::VisualParams::defaultInstance();
 

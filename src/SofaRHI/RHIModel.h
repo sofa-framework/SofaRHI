@@ -111,7 +111,7 @@ public:
 private:
 };
 
-class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIVisualModel, public RHIComputeModel
+class SOFA_SOFARHI_API RHIModel : public sofa::component::visualmodel::VisualModelImpl, public RHIGraphicModel, public RHIComputeModel
 {
 public:
     SOFA_CLASS(RHIModel,  sofa::component::visualmodel::VisualModelImpl);
@@ -128,14 +128,14 @@ public:
     void handleTopologyChange() override; 
     
     // RHIVisualModel API
-    bool initRHIResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc);
-    void updateRHIResources(QRhiResourceUpdateBatch* batch);
-    void updateRHICommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport);
+    bool initGraphicResources(QRhiPtr rhi, QRhiRenderPassDescriptorPtr rpDesc) override;
+    void updateGraphicResources(QRhiResourceUpdateBatch* batch) override;
+    void updateGraphicCommands(QRhiCommandBuffer* cb, const QRhiViewport& viewport) override;
 
     // RHIComputeModel API
-    bool initComputeResources(QRhiPtr rhi);
-    void updateComputeResources(QRhiResourceUpdateBatch* batch);
-    void updateComputeCommands(QRhiCommandBuffer* cb);
+    bool initComputeResources(QRhiPtr rhi) override;
+    void updateComputeResources(QRhiResourceUpdateBatch* batch) override;
+    void updateComputeCommands(QRhiCommandBuffer* cb) override;
 
 private:
     void internalDraw(const sofa::core::visual::VisualParams* vparams, bool transparent) override;

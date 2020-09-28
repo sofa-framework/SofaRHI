@@ -962,7 +962,7 @@ void RHIViewer::drawScene()
     }
 
     //getSimulation()->updateVisual(groot.get()); 
-    m_rhiloop->updateRHIResourcesStep(m_vparams); // will call Visitor for updating RHI resources for RHIVisualModels and Other BaseObjects
+    m_rhiloop->updateRHIResourcesStep(m_vparams); // will call Visitor for updating RHI resources for RHIGraphicModels and Other BaseObjects
 
     cb->beginPass(rt, Qt::gray, { 1.0f, 0 }, updates);
 
