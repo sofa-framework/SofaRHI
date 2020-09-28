@@ -68,7 +68,7 @@ public:
     /// and can be used to unregister classes associated with in the the ObjectFactory.
     static int DisableViewer();
 
-    RHIViewer( QWidget* parent, const char* name="", const unsigned int nbMSAASamples = 1, bool replaceOgl = true );
+    RHIViewer( QWidget* parent, const char* name="", const unsigned int nbMSAASamples = 1);
     ~RHIViewer() override;
 
     QWidget* getQWidget() override { return this; }
@@ -170,7 +170,9 @@ private:
 
     // arguments from argument parser (static because parser is in a static function...)
     static std::string s_keyGgraphicsAPI;
-    // other stuff if necessart
+    // other stuff if necessary
+
+    
 
 protected:
     friend class InteractionEventManager;

@@ -116,7 +116,7 @@ int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParse
     return 0;
 }
 
-RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSAASamples, bool replaceOgl)
+RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSAASamples)
     : QWidget(parent)
 {
     this->setObjectName(name);

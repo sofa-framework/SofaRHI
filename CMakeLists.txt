@@ -5,6 +5,8 @@ set(SOFARHI_SRC_DIR src/SofaRHI)
 
 set(SOURCE_FILES
     ${SOFARHI_SRC_DIR}/gui/RHIViewer.cpp
+    ${SOFARHI_SRC_DIR}/gui/RHIViewer.cpp
+    ${SOFARHI_SRC_DIR}/gui/RHIOffscreenViewer.cpp
     # ${SOFARHI_SRC_DIR}/gui/RHIPickHandler.cpp
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.cpp
     # ${SOFARHI_SRC_DIR}/RHIObject.cpp
@@ -23,6 +25,7 @@ set(SOURCE_FILES
 set(HEADER_FILES
     ${SOFARHI_SRC_DIR}/config.h.in
     ${SOFARHI_SRC_DIR}/gui/RHIViewer.h
+    ${SOFARHI_SRC_DIR}/gui/RHIOffscreenViewer.h
     # ${SOFARHI_SRC_DIR}/gui/RHIPickHandler.h
     ${SOFARHI_SRC_DIR}/gui/RHIBackend.h
     # ${SOFARHI_SRC_DIR}/RHIObject.h
