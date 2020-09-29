@@ -1,5 +1,6 @@
 #include <SofaRHI/gui/RHIOffscreenViewer.h>
 
+#include <SofaRHI/gui/RHIGUIUtils.h>
 #include <SofaRHI/RHIVisualManagerLoop.h>
 
 #include <sofa/helper/system/FileRepository.h>
@@ -15,30 +16,7 @@
 
 #include <QApplication>
 #include <QFileInfo>
-#include <QtGui/private/qshader_p.h>
-#if QT_CONFIG(opengl)
-# include <QOpenGLContext>
-# include <QtGui/private/qrhigles2_p.h>
-#endif
-
-#if QT_CONFIG(vulkan) && Vulkan_FOUND
-# define VIEWER_USE_VULKAN 1
-# include <QVulkanInstance>
-# include <QtGui/private/qrhivulkan_p.h>
-#endif
-
-#ifdef Q_OS_WIN
-#include <QtGui/private/qrhid3d11_p.h>
-#endif
-
-#ifdef Q_OS_DARWIN
-# include <QtGui/private/qrhimetal_p.h>
-#endif
-
-Q_DECLARE_METATYPE(QRhi::Implementation)
-Q_DECLARE_METATYPE(QRhiInitParams*)
-
-
+#include <QOffscreenSurface>
 
 namespace sofa::rhi::gui
 {
@@ -70,29 +48,9 @@ const std::string RHIOffscreenViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
 int RHIOffscreenViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
 {
-    static std::vector<std::string> supportedAPIs;
+    std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
+    const std::string defaultStr = supportedAPIs[0];
     
-#ifdef Q_OS_WIN
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-    supportedAPIs.emplace_back("d3d");
-#endif // Q_OS_WIN
-#ifdef Q_OS_DARWIN //ios or mac
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-    supportedAPIs.emplace_back("mtl");
-#endif // Q_OS_DARWIN
-#if defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
-    static std::string defaultStr = "ogl";
-
-    supportedAPIs.emplace_back(defaultStr);
-#endif // Q_OS_LINUX || Q_OS_ANDROID
-#if VIEWER_USE_VULKAN
-    supportedAPIs.emplace_back("vlk");
-#endif // VIEWER_USE_VULKAN
-
     std::ostringstream displayChoice;
     displayChoice << "select graphics API between: " ;
     for (const auto& supportedAPI : supportedAPIs)
@@ -102,10 +60,10 @@ int RHIOffscreenViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argu
     argumentParser->addArgument(
         boost::program_options::value<std::string>(&s_keyGgraphicsAPI)
         ->default_value(defaultStr)
-        ->notifier([](const std::string value) {
+        ->notifier([supportedAPIs, defaultStr](const std::string value) {
             if (std::find(supportedAPIs.begin(), supportedAPIs.end(), value) != supportedAPIs.end())
             {
-                msg_error("RHIViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
+                msg_error("RHIOffscreenViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
             }
         }),
         "api", displayChoice.str()
@@ -126,7 +84,7 @@ RHIOffscreenViewer::RHIOffscreenViewer()
     //s_keyGgraphicsAPI = "ogl";
     s_keyGgraphicsAPI = "d3d";
 
-    const QRhi::Implementation graphicsAPI = s_mapGraphicsAPI[s_keyGgraphicsAPI].first;
+    const QRhi::Implementation graphicsAPI = sofa::rhi::gui::RHIGUIUtils::MapGraphicsAPI[s_keyGgraphicsAPI].first;
 
     //// RHI Setup
     QRhiInitParams* initParams = nullptr;
@@ -207,36 +165,12 @@ RHIOffscreenViewer::RHIOffscreenViewer()
     //m_rhi->addCleanupCallback(cleanupRHI);
     m_vparams->drawTool() = m_drawTool;
 
-
-    sofa::core::ObjectFactory::ClassEntry::SPtr replaceOglModel;
-    sofa::core::ObjectFactory::AddAlias("VisualModel", "RHIModel", true,
-            &replaceOglModel);
-
+    ///// Make sure that there is no (direct) OpenGL related stuff in the scene
     const std::string openglPlugin = "SofaOpenglVisual";
-    auto& pluginManager = sofa::helper::system::PluginManager::getInstance();
-    if (pluginManager.pluginIsLoaded(openglPlugin))
-    {
-        msg_warning("RHIViewer") << "SofaOpenGLVisual plugin has been loaded and is incompatible with SofaRHI";
-        msg_warning("RHIViewer") << "SofaRHI will disable all its components and replace OglModel with RHIModel to prevent crashing.";
+    RHIGUIUtils::DisablePluginComponents({ openglPlugin });
 
-        std::vector<sofa::core::ObjectFactory::ClassEntry::SPtr> listComponents;
-        sofa::core::ObjectFactory::getInstance()->getEntriesFromTarget(listComponents, openglPlugin);
-        for (auto component : listComponents)
-        {
-            sofa::core::ObjectFactory::ClassEntry::SPtr entry;
-            if(component->className != "OglModel")
-            { 
-                sofa::core::ObjectFactory::AddAlias(component->className, "DisabledObject", true,
-                    &entry);
-            }
-            else
-            {
-                msg_warning("RHIViewer") << "All occurences of OglModel will be replaced by RHIModel";
-                sofa::core::ObjectFactory::AddAlias("OglModel", "RHIModel", true,
-                    &entry);
-            }
-        }
-    }
+    ///// And replace all VisualModel/OglModel with RHIModel
+    RHIGUIUtils::ReplaceVisualModelAliases({ "VisualModel", "OglModel" });
 
 
     m_groot = nullptr;

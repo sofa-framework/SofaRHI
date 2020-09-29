@@ -1,5 +1,8 @@
 #include <SofaRHI/gui/RHIGUIUtils.h>
 
+#include <sofa/helper/system/PluginManager.h>
+#include <sofa/core/ObjectFactory.h>
+
 namespace sofa::rhi::gui
 {
 
@@ -37,6 +40,41 @@ std::vector<std::string> RHIGUIUtils::GetSupportedAPIs()
 #endif // VIEWER_USE_VULKAN
 
     return supportedAPIs;
+}
+
+
+void RHIGUIUtils::DisablePluginComponents(const std::vector<std::string>& pluginNameList)
+{
+    for (const auto& pluginName : pluginNameList)
+    {
+        auto& pluginManager = sofa::helper::system::PluginManager::getInstance();
+        if (pluginManager.pluginIsLoaded(pluginName))
+        {
+            msg_warning("RHIGUI") << pluginName << " plugin has been loaded and is incompatible with SofaRHI";
+            msg_warning("RHIGUI") << "SofaRHI will disable all its components to prevent crashing.";
+
+            std::vector<sofa::core::ObjectFactory::ClassEntry::SPtr> listComponents;
+            sofa::core::ObjectFactory::getInstance()->getEntriesFromTarget(listComponents, pluginName);
+            sofa::core::ObjectFactory::ClassEntry::SPtr classEntry;
+            for (auto component : listComponents)
+            {
+                sofa::core::ObjectFactory::AddAlias(component->className, "DisabledObject", true,
+                    &classEntry);
+            }
+        }
+    }
+}
+
+void RHIGUIUtils::ReplaceVisualModelAliases(const std::vector<std::string>& aliases)
+{
+    for (const auto& alias : aliases)
+    {
+        msg_warning("RHIGUI") << "All occurences of " << alias << " will be replaced by RHIModel";
+
+        sofa::core::ObjectFactory::ClassEntry::SPtr classEntry;
+        sofa::core::ObjectFactory::AddAlias(alias, "RHIModel", true,
+            &classEntry);
+    }
 }
 
 } // namespace sofa::rhi::gui

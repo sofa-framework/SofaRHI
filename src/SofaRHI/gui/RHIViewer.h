@@ -15,9 +15,6 @@
 
 #include <QtGui/private/qrhi_p.h>
 #include <QtGui/private/qrhinull_p.h>
-#include <QSurfaceFormat>
-#include <QOffscreenSurface>
-#include <QPainter>
 
 namespace sofa::rhi::gui
 {

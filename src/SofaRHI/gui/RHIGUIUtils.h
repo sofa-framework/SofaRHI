@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtGui/private/qrhinull_p.h>
 #include <QtGui/private/qshader_p.h>
 #if QT_CONFIG(opengl)
 # include <QOpenGLContext>
@@ -39,6 +40,10 @@ struct RHIGUIUtils
     static std::map<std::string, std::pair<QRhi::Implementation, std::string> > MapGraphicsAPI;
 
     static std::vector<std::string> GetSupportedAPIs();
+
+    static void DisablePluginComponents(const std::vector<std::string>& pluginNameList);
+
+    static void ReplaceVisualModelAliases(const std::vector<std::string>& aliases);
 };
 
 } // namespace sofa::rhi::gui
