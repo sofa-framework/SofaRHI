@@ -48,7 +48,7 @@ const std::string RHIOffscreenViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
 int RHIOffscreenViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
 {
-    std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
+    const std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
     const std::string defaultStr = supportedAPIs[0];
     
     std::ostringstream displayChoice;
