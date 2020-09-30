@@ -881,10 +881,15 @@ void RHIViewer::drawScene()
 
     if (m_bShowAxis)
     {
+        const auto bbox = m_vparams->sceneBBox();
         if (m_vparams->sceneBBox().isValid())
-            m_drawTool->drawBoundingBox(m_vparams->sceneBBox().minBBox(), m_vparams->sceneBBox().maxBBox());
+            m_drawTool->drawBoundingBox(bbox.minBBox(), bbox.maxBBox());
 
-        //m_drawTool->drawCylinder({ 0.0, 0.0, 0.0 }, { 0.0, 30.0, 0.0 }, 10, { 1.0, 0.0, 0.0, 1.0 });
+        double halfLength = (bbox.maxBBox() - bbox.minBBox()).norm2() * 0.001 * 0.5;
+        double thickness = (bbox.maxBBox() - bbox.minBBox()).norm2() * 0.0001;
+        m_drawTool->drawCylinder({ 0, 0.0, 0.0 }, { halfLength * 1.5, 0.0, 0.0 }, thickness, helper::types::RGBAColor::red());
+        m_drawTool->drawCylinder({ 0.0, 0, 0.0 }, { 0.0, halfLength * 1.5, 0.0 }, thickness, helper::types::RGBAColor::green());
+        m_drawTool->drawCylinder({ 0.0, 0.0, 0 }, { 0.0, 0.0, halfLength * 1.5 }, thickness, helper::types::RGBAColor::blue());
 
     }
     

@@ -853,13 +853,27 @@ void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radiu
 
     //rotate and translate cylinder
     //extremely not optimized
-    auto rotation = helper::Quater< SReal >({ 1.0, 0.0, 0.0 }, direction);
-    //auto transformation = Matrix4d::transformTranslation(p1) *
-    //    Matrix4d::transformRotation(rotation);
-    //for (auto& v : meshVertices)
-    //{
-    //    v = transformation.transform(v);
-    //}
+    //find rotation, creating frame
+    Vector3 zAxis = direction.normalized();
+    Vector3 yAxis(0.0, 1.0, 0.0);
+
+    Vector3 xAxis = yAxis.cross(zAxis);
+    xAxis.normalize();
+
+    if (xAxis.norm2() < std::numeric_limits<SReal>::epsilon() * 10)
+        xAxis = {1.0, 0.0, 0.0};
+    xAxis.normalize();
+
+    yAxis = zAxis.cross(xAxis);
+
+    auto rotation = helper::Quater<SReal>::createQuaterFromFrame(xAxis, yAxis, zAxis);
+    rotation.normalize();
+    auto transformation = Matrix4d::transformTranslation(direction * 0.5) *  Matrix4d::transformRotation(rotation) ;
+    
+    for (auto& v : meshVertices)
+    {
+        v = transformation.transform(v);
+    }
 
     for (auto& n : meshNormals)
     {
