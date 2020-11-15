@@ -69,8 +69,15 @@ RHIViewer::RHIViewer(QWidget* parent, const char* name, const unsigned int nbMSA
     //so no way to call RegisterGUIParameters
     //for now we select the Graphical API here.
 
-    //s_keyGgraphicsAPI = "ogl";
+#ifdef Q_OS_WIN
     s_keyGgraphicsAPI = "d3d";
+#endif // Q_OS_WIN
+#ifdef Q_OS_DARWIN
+    s_keyGgraphicsAPI = "mtl";
+#endif // Q_OS_WIN
+#ifdef Q_OS_LINUX
+    s_keyGgraphicsAPI = "ogl";
+#endif // Q_OS_WIN
 
     const QRhi::Implementation graphicsAPI = sofa::rhi::gui::RHIGUIUtils::MapGraphicsAPI[s_keyGgraphicsAPI].first;
 

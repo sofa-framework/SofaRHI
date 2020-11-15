@@ -5,6 +5,7 @@
 
 #include <SofaRHI/RHIMeshGenerator.inl>
 
+
 namespace sofa::rhi
 {
 

@@ -81,8 +81,15 @@ int RHIOffscreenViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argu
 
 RHIOffscreenViewer::RHIOffscreenViewer()
 {    
-    //s_keyGgraphicsAPI = "ogl";
+#ifdef Q_OS_WIN
     s_keyGgraphicsAPI = "d3d";
+#endif // Q_OS_WIN
+#ifdef Q_OS_DARWIN
+    s_keyGgraphicsAPI = "mtl";
+#endif // Q_OS_WIN
+#ifdef Q_OS_LINUX
+    s_keyGgraphicsAPI = "ogl";
+#endif // Q_OS_WIN
 
     const QRhi::Implementation graphicsAPI = sofa::rhi::gui::RHIGUIUtils::MapGraphicsAPI[s_keyGgraphicsAPI].first;
 

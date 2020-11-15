@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
-project(SofaRHI VERSION 0.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.12)
+project(SofaRHI VERSION 1.0 LANGUAGES CXX)
 
 set(SOFARHI_SRC_DIR src/SofaRHI)
 
@@ -60,7 +60,7 @@ find_package(SofaBase REQUIRED)
 find_package(SofaGui REQUIRED)
 
 if(Vulkan_FOUND)
-    message(STATUS "Vulkan detected, enabling Vulkan specific code (if you compiled QT with vulkan)." )
+    message(STATUS "Vulkan detected, enabling Vulkan specific code (if you compiled Qt with vulkan)." )
 else()
     message(STATUS "No support for Vulkan detected, disabling Vulkan specific code." )
 endif()
@@ -72,22 +72,27 @@ target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::GuiPrivate Qt5::Wi
 if(Vulkan_FOUND)
     target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan )
 endif()
-target_compile_definitions(${PROJECT_NAME} PRIVATE "-DSOFA_BUILD_SOFARHI")
 
-# TEMP
-message("###### TO REMOVE LATER: ")
-if(MSVC)
-    foreach (CONFIG Debug Release RelWithDebInfo MinSizeRel) 
-        set(plugin_config_file "${CMAKE_BINARY_DIR}/bin/${CONFIG}/plugin_list.conf.default")
-        FILE(APPEND ${plugin_config_file} "\n${PROJECT_NAME} NO_VERSION\n")
+# Workaround on the fact that SofaRHI needs to be loaded before the GUI is set-up
+# (RequiredPlugin cannot be used)
+# and this Workaround is only useful with runSofa
+# This is mainly to avoid loading manually the plugin in the commandline parameter (-l SofaRHI)
+option(SOFARHI_ADD_IN_AUTOLOAD_LIST "Add ${PROJECT_NAME} in the default list of autoloaded plugins (for runSofa)" ON)
+if(SOFARHI_ADD_IN_AUTOLOAD_LIST)
+    message("## Adding ${PROJECT_NAME} in autoloaded plugin list")
+    if(MSVC)
+        foreach (CONFIG Debug Release RelWithDebInfo MinSizeRel) 
+            set(plugin_config_file "${CMAKE_BINARY_DIR}/bin/${CONFIG}/plugin_list.conf.default")
+            FILE(APPEND ${plugin_config_file} "\n${PROJECT_NAME} ${PROJECT_VERSION}\n")
+            message("Adding SofaRHI to runSofa plugin list at ${plugin_config_file}")
+        endforeach()
+    else()
+        set(plugin_config_file "${CMAKE_BINARY_DIR}/lib/plugin_list.conf.default")
+        FILE(APPEND ${plugin_config_file} "\n${PROJECT_NAME} ${PROJECT_VERSION}")
         message("Adding SofaRHI to runSofa plugin list at ${plugin_config_file}")
-    endforeach()
-else()
-    set(plugin_config_file "${CMAKE_BINARY_DIR}/lib/plugin_list.conf.default")
-    FILE(APPEND ${plugin_config_file} "\n${PROJECT_NAME} NO_VERSION")
-    message("Adding SofaRHI to runSofa plugin list at ${plugin_config_file}")
+    endif()
+    message("##")
 endif()
-message("######")
 
 ## Install rules for the library; CMake package configurations files
 sofa_create_package_with_targets(

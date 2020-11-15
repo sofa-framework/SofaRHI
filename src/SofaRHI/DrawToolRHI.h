@@ -3,6 +3,7 @@
 #include <sofa/core/visual/DrawTool.h>
 
 #include <sofa/core/visual/DisplayFlags.h>
+#include <sofa/defaulttype/Mat.h>
 
 #include <array>
 #include <stack>
