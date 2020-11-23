@@ -31,8 +31,8 @@ namespace sofa::rhi::utils
     struct BufferInfo
     {
         QRhiBuffer* buffer;
-        int offset;
-        int size;
+        sofa::Size offset;
+        sofa::Size size;
     };
 
     //as defined in the shader files
@@ -50,11 +50,11 @@ namespace sofa::rhi::utils
     };
 
     //Definitions
-    constexpr std::size_t MATRIX4_SIZE{ 64 };
-    constexpr std::size_t VEC3_SIZE{ 12 };
-    constexpr std::size_t PHONG_MATERIAL_SIZE = sizeof(PhongMaterial);
-    constexpr std::size_t MAXIMUM_MATERIAL_NUMBER{ 9 }; //
-    constexpr std::size_t GROUPINFO_SIZE = sizeof(GroupInfo);
+    constexpr sofa::Size MATRIX4_SIZE{ 64 };
+    constexpr sofa::Size VEC3_SIZE{ 12 };
+    constexpr sofa::Size PHONG_MATERIAL_SIZE = sizeof(PhongMaterial);
+    constexpr sofa::Size MAXIMUM_MATERIAL_NUMBER{ 9 }; //
+    constexpr sofa::Size GROUPINFO_SIZE = sizeof(GroupInfo);
 
     //Helper functions
     QShader loadShader(const std::string& name);

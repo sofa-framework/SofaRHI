@@ -394,10 +394,10 @@ void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float s
     m_currentVertexBufferByteSize += positionsBufferByteSize + colorsBufferByteSize;
 
     int startIndexOffset = m_currentIndexBufferByteSize;
-    int nbPoints = int(points.size());
-    std::vector<int> indices;
+    auto nbPoints = points.size();
+    std::vector<sofa::Index> indices;
     indices.resize(points.size());
-    for (size_t i = 0; i < indices.size(); i++)
+    for (sofa::Index i = 0; i < indices.size(); i++)
         indices[i] = i;
     int pointByteSize = int(nbPoints * sizeof(int));
     m_currentRUB->updateDynamicBuffer(m_indexBuffer, startIndexOffset, pointByteSize, indices.data());
@@ -413,7 +413,7 @@ void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float s
         } ,
         {},
         {m_indexBuffer, startIndexOffset, pointByteSize},
-        VertexInputData::PrimitiveType::POINT, nbPoints
+        VertexInputData::PrimitiveType::POINT, int(nbPoints)
     });
 }
 
