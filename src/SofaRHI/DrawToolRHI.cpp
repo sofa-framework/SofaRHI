@@ -377,7 +377,7 @@ void DrawToolRHI::convertVecAToVecB(const A& vecA, B& vecB)
 }
 
 
-void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float size, const std::vector<Vec4f>& colors)
+void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float size, const std::vector<RGBAColor>& colors)
 {
     ///////////// Resources
     std::vector <Vector3f> pointsF, normalF;
@@ -417,7 +417,7 @@ void DrawToolRHI::internalDrawPoints(const std::vector<Vector3>& points, float s
     });
 }
 
-void DrawToolRHI::internalDrawLines(const std::vector<Vector3>& points, const std::vector< Vec2i >& index, float size, const std::vector<Vec4f>& colors)
+void DrawToolRHI::internalDrawLines(const std::vector<Vector3>& points, const std::vector< Vec2i >& index, float size, const std::vector<RGBAColor>& colors)
 {
     ///////////// Resources
     std::vector <Vector3f> pointsF;
@@ -452,7 +452,7 @@ void DrawToolRHI::internalDrawLines(const std::vector<Vector3>& points, const st
         });
 }
 
-void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors)
+void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<RGBAColor>& colors)
 {
     ///////////// Resources
     std::vector <Vector3f> pointsF, normalF;
@@ -493,7 +493,7 @@ void DrawToolRHI::internalDrawTriangles(const std::vector<Vector3>& points, cons
 
 }
 
-void DrawToolRHI::internalDrawInstancedTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<Vec4f>& colors, const std::vector<Vector3f>& transforms)
+void DrawToolRHI::internalDrawInstancedTriangles(const std::vector<Vector3>& points, const std::vector< Vec3i >& index, const std::vector<Vector3>& normal, const std::vector<RGBAColor>& colors, const std::vector<Vector3f>& transforms)
 {
     //TODO: for now, transform is just a translation, as I dont know how to pass a mat4 as an (instanced) attribute (multiple locations and stuff)
     ///////////// Resources
@@ -543,21 +543,21 @@ void DrawToolRHI::internalDrawInstancedTriangles(const std::vector<Vector3>& poi
 
 }
 
-void DrawToolRHI::drawPoints(const std::vector<Vector3>& points, float size, const  Vec4f& color)
+void DrawToolRHI::drawPoints(const std::vector<Vector3>& points, float size, const  RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
 
     internalDrawPoints(points, size, colors);
 }
 
-void DrawToolRHI::drawPoints(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors)
+void DrawToolRHI::drawPoints(const std::vector<Vector3> &points, float size, const std::vector<RGBAColor>& colors)
 {
     internalDrawPoints(points, size, colors);
 }
 
-void DrawToolRHI::drawLine(const Vector3 &p1, const Vector3 &p2, const Vec4f& color)
+void DrawToolRHI::drawLine(const Vector3 &p1, const Vector3 &p2, const RGBAColor& color)
 {
     std::vector<Vector3> positions;
     positions.push_back(p1);
@@ -566,9 +566,9 @@ void DrawToolRHI::drawLine(const Vector3 &p1, const Vector3 &p2, const Vec4f& co
     drawLines(positions, 1, color);
 }
 
-void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, const Vec4f& color)
+void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
@@ -576,7 +576,7 @@ void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, cons
     drawLines(points, size, colors);
 }
 
-void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, const std::vector<Vec4f>& colors)
+void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, const std::vector<RGBAColor>& colors)
 {
     std::vector<Vec2i> indices;
     std::size_t nbLines = points.size()/2;
@@ -589,34 +589,34 @@ void DrawToolRHI::drawLines(const std::vector<Vector3> &points, float size, cons
 
 }
 
-void DrawToolRHI::drawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const Vec4f& color)
+void DrawToolRHI::drawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
 
     internalDrawLines(points, index, size, colors);
 }
-void DrawToolRHI::drawInfiniteLine(const Vector3 &point, const Vector3 &direction, const Vec4f& color){}
-void DrawToolRHI::drawLineStrip(const std::vector<Vector3> &points, float size, const Vec4f& color){}
-void DrawToolRHI::drawLineLoop(const std::vector<Vector3> &points, float size, const Vec4f& color){}
-void DrawToolRHI::drawDisk(float radius, double from, double to, int resolution, const Vec4f& color){}
-void DrawToolRHI::drawCircle(float radius, float lineThickness, int resolution, const Vec4f& color){}
+void DrawToolRHI::drawInfiniteLine(const Vector3 &point, const Vector3 &direction, const RGBAColor& color){}
+void DrawToolRHI::drawLineStrip(const std::vector<Vector3> &points, float size, const RGBAColor& color){}
+void DrawToolRHI::drawLineLoop(const std::vector<Vector3> &points, float size, const RGBAColor& color){}
+void DrawToolRHI::drawDisk(float radius, double from, double to, int resolution, const RGBAColor& color){}
+void DrawToolRHI::drawCircle(float radius, float lineThickness, int resolution, const RGBAColor& color){}
 
 /// Triangles
 ///
 void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 const std::vector< Vec3i > &index,
 const std::vector<Vector3>  &normal,
-const std::vector<Vec4f>& colors)
+const std::vector<RGBAColor>& colors)
 {
     internalDrawTriangles(points, index, normal, colors);
 }
 
-void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vec4f& color)
+void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
@@ -624,9 +624,9 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vec4f&
     drawTriangles(points, colors);
 }
 
-void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vector3& normal, const Vec4f& color)
+void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vector3& normal, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
     std::vector<Vector3> normals;
 
     colors.resize(points.size());
@@ -639,7 +639,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vector
 
 
 void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
-    const std::vector< Vec4f > &colour)
+    const std::vector< RGBAColor > &colour)
 {
     std::vector<Vec3i> indices;
     std::vector<Vector3> normals;
@@ -665,7 +665,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 
 void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
     const std::vector<Vector3>  &normal,
-    const std::vector< Vec4f > &colour)
+    const std::vector< RGBAColor > &colour)
 {
     std::vector<Vec3i> indices;
     std::size_t nbTriangles = points.size()/3;
@@ -680,11 +680,11 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
     const std::vector< Vec3i > &index,
     const std::vector<Vector3>  &normal,
-    const Vec4f& color)
+    const RGBAColor& color)
 {
     setMaterial(color);
 
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
 
@@ -733,30 +733,30 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
     const Vector3 &normal)
 {
-    drawTriangle(p1, p2, p3, normal, Vec4f(1.0f, 1.0f,1.0f,1.0f)); // with a dummy
+    drawTriangle(p1, p2, p3, normal, RGBAColor(1.0f, 1.0f,1.0f,1.0f)); // with a dummy
 }
 
 void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &normal, const Vec4f &c)
+    const Vector3 &normal, const RGBAColor &c)
 {
     drawTriangle(p1, p2, p3, normal, normal, normal, c, c, c);
 }
 
 void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
     const Vector3 &normal,
-    const Vec4f &c1, const Vec4f &c2, const Vec4f &c3)
+    const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3)
 {
     drawTriangle(p1, p2, p3, normal, normal, normal, c1, c2, c3);
 }
 
 void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
     const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3,
-    const Vec4f &c1, const Vec4f &c2, const Vec4f &c3)
+    const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3)
 {
     std::vector<Vector3> points;
     std::vector<Vector3> normals;
     std::vector<Vec3i> indices;
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     points.push_back(p1);
     points.push_back(p2);
@@ -778,20 +778,20 @@ void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vecto
 /// Triangles Strip
 void DrawToolRHI::drawTriangleStrip(const std::vector<Vector3> &points,
     const std::vector<Vector3>  &normal,
-    const Vec4f& color)
+    const RGBAColor& color)
 {
 }
 /// Triangles Fan
 void DrawToolRHI::drawTriangleFan(const std::vector<Vector3> &points,
     const std::vector<Vector3>  &normal,
-    const Vec4f& color)
+    const RGBAColor& color)
 {
 }
 
 void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size){}
-void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size, const Vec4f &colour){}
+void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size, const RGBAColor &colour){}
 
-void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec4f& color)
+void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const RGBAColor& color)
 {
     std::vector<Vector3f> translations;
     for (const auto& p : points)
@@ -801,7 +801,7 @@ void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vec
 
     std::vector<Vector3> meshPoints;
     std::vector<Vector3> meshNormals;
-    std::vector<Vec4f> meshColors;
+    std::vector<RGBAColor> meshColors;
     std::vector<Vec3i> meshTriangles;
     std::vector<Vec2f> meshTexcoords;
 
@@ -813,7 +813,7 @@ void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vec
     internalDrawInstancedTriangles(meshPoints, meshTriangles, meshNormals, meshColors, translations);
 }
 
-void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, float radius, const Vec4f& color)
+void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, float radius, const RGBAColor& color)
 {
     std::vector<float> radii;
     radii.resize(points.size());
@@ -822,26 +822,26 @@ void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, float radius, 
     drawSpheres(points, radii, color);
 }
 
-void DrawToolRHI::drawFakeSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec4f& color)
+void DrawToolRHI::drawFakeSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const RGBAColor& color)
 {
     drawSpheres(points, radius, color);
 }
 
-void DrawToolRHI::drawFakeSpheres(const std::vector<Vector3> &points, float radius, const Vec4f& color)
+void DrawToolRHI::drawFakeSpheres(const std::vector<Vector3> &points, float radius, const RGBAColor& color)
 {
     drawSpheres(points, radius, color);
 }
 
-void DrawToolRHI::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec4f& color, int subd){}
+void DrawToolRHI::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const RGBAColor& color, int subd){}
 
 /// Draw a cube of size one centered on the current point.
-void DrawToolRHI::drawCube(const float& radius, const Vec4f& color, const int& subd){}
+void DrawToolRHI::drawCube(const float& radius, const RGBAColor& color, const int& subd){}
 
-void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd)
+void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd)
 {
     std::vector<Vector3> meshVertices;
     std::vector<Vector3> meshNormals;
-    std::vector<Vec4f> meshColors;
+    std::vector<RGBAColor> meshColors;
     std::vector<Vec3i> meshTriangles;
     std::vector<Vec2f> meshTexcoords;
 
@@ -886,35 +886,35 @@ void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radiu
     internalDrawTriangles(meshVertices, meshTriangles, meshNormals, meshColors);
 }
 
-void DrawToolRHI::drawCapsule(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd){}
+void DrawToolRHI::drawCapsule(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd){}
 
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, const Vec4f& color, int subd){}
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, float coneLength, const Vec4f& color, int subd){}
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3& p2, float radius, float coneLength, float coneRadius, const Vec4f& color, int subd) {}
+void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, float coneLength, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3& p2, float radius, float coneLength, float coneRadius, const RGBAColor& color, int subd) {}
 
 /// Draw a cross (3 lines) centered on p
-void DrawToolRHI::drawCross(const Vector3&p, float length, const Vec4f& color){}
+void DrawToolRHI::drawCross(const Vector3&p, float length, const RGBAColor& color){}
 
 /// Draw a plus sign of size one centered on the current point.
-void DrawToolRHI::drawPlus(const float& radius, const Vec4f& color, const int& subd ){}
+void DrawToolRHI::drawPlus(const float& radius, const RGBAColor& color, const int& subd ){}
 
-void DrawToolRHI::drawPoint(const Vector3 &p, const Vec4f &c){}
-void DrawToolRHI::drawPoint(const Vector3 &p, const Vector3 &n, const Vec4f &c){}
+void DrawToolRHI::drawPoint(const Vector3 &p, const RGBAColor &c){}
+void DrawToolRHI::drawPoint(const Vector3 &p, const Vector3 &n, const RGBAColor &c){}
 
 /// Quads methods
 void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
     const Vector3 &normal){}
 void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-    const Vector3 &normal, const Vec4f &c){}
+    const Vector3 &normal, const RGBAColor &c){}
 void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
     const Vector3 &normal,
-    const Vec4f &c1, const Vec4f &c2, const Vec4f &c3, const Vec4f &c4){}
+    const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4){}
 void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
     const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3, const Vector3 &normal4,
-    const Vec4f &c1, const Vec4f &c2, const Vec4f &c3, const Vec4f &c4){}
-void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const Vec4f& color)
+    const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4){}
+void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
@@ -922,7 +922,7 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const Vec4f& col
     drawQuads(points, colors);
 }
 
-void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vector<Vec4f>& colors)
+void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vector<RGBAColor>& colors)
 {
     std::vector<Vector3> normals;
     std::vector<Vec3i> indices;
@@ -956,14 +956,14 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
 }
 
 /// Tetrahedra methods
-void DrawToolRHI::drawTetrahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vec4f &colour){}
-void DrawToolRHI::drawTetrahedra(const std::vector<Vector3> &points, const Vec4f& color)
+void DrawToolRHI::drawTetrahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const RGBAColor &colour){}
+void DrawToolRHI::drawTetrahedra(const std::vector<Vector3> &points, const RGBAColor& color)
 {
     drawScaledTetrahedra(points, color, 1.0f);
 }
 
 //Scale each tetrahedron
-void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const Vec4f& color, const float scale)
+void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const RGBAColor& color, const float scale)
 {
     std::vector<Vector3> newpoints;
     newpoints.reserve(points.size());
@@ -995,11 +995,11 @@ void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const
 /// Hexahedra methods
 
 void DrawToolRHI::drawHexahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &p4, const Vector3 &p5, const Vector3 &p6, const Vector3 &p7, const Vec4f &colour){}
+    const Vector3 &p4, const Vector3 &p5, const Vector3 &p6, const Vector3 &p7, const RGBAColor &colour){}
 
-void DrawToolRHI::drawHexahedra(const std::vector<Vector3> &points, const Vec4f& color)
+void DrawToolRHI::drawHexahedra(const std::vector<Vector3> &points, const RGBAColor& color)
 {
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
 
     colors.resize(points.size());
     std::fill(colors.begin(), colors.end(), color);
@@ -1008,12 +1008,12 @@ void DrawToolRHI::drawHexahedra(const std::vector<Vector3> &points, const Vec4f&
 }
 
 //Scale each hexahedron
-void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const Vec4f& color, const float scale)
+void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const RGBAColor& color, const float scale)
 {
     std::vector<Vector3> newpoints;
     std::vector<Vector3> normals;
     std::vector<Vec4i> quads;
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
     colors.reserve(points.size());
     quads.reserve(points.size());
     normals.reserve(points.size());
@@ -1053,7 +1053,7 @@ void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const 
 }
 
 void DrawToolRHI::drawSphere(const Vector3 &p, float radius){}
-void DrawToolRHI::drawSphere(const Vector3 &p, float radius, const Vec4f& colour) {}
+void DrawToolRHI::drawSphere(const Vector3 &p, float radius, const RGBAColor& colour) {}
 
 void DrawToolRHI::drawEllipsoid(const Vector3 &p, const Vector3 &radii){}
 
@@ -1091,19 +1091,19 @@ void DrawToolRHI::drawBoundingBox(const Vector3 &min, const Vector3 &max, float 
 
     // color is supposed to be set with setMaterial
     // but still we set white by default
-    std::vector<Vec4f> colors;
+    std::vector<RGBAColor> colors;
     colors.resize(8);
-    std::fill(colors.begin(), colors.end(), Vec4f {1.0f, 1.0f, 1.0f, 1.0f});
+    std::fill(colors.begin(), colors.end(), RGBAColor {1.0f, 1.0f, 1.0f, 1.0f});
     internalDrawLines(points, indices, size, colors);
 
 }
 
-void DrawToolRHI::draw3DText(const Vector3 &p, float scale, const Vec4f &color, const char* text)
+void DrawToolRHI::draw3DText(const Vector3 &p, float scale, const RGBAColor &color, const char* text)
 {
     
 }
 
-void DrawToolRHI::draw3DText_Indices(const std::vector<Vector3> &positions, float scale, const Vec4f &color)
+void DrawToolRHI::draw3DText_Indices(const std::vector<Vector3> &positions, float scale, const RGBAColor &color)
 {
 
 }
@@ -1117,12 +1117,12 @@ void DrawToolRHI::multMatrix(float*){}
 void DrawToolRHI::scale(float){}
 void DrawToolRHI::translate(float x, float y, float z){}
 
-void DrawToolRHI::setMaterial(const Vec4f &colour)
+void DrawToolRHI::setMaterial(const RGBAColor &colour)
 {
 
 }
 
-void DrawToolRHI::resetMaterial(const Vec4f &colour)
+void DrawToolRHI::resetMaterial(const RGBAColor &colour)
 {
 }
 
@@ -1157,7 +1157,7 @@ void DrawToolRHI::restoreLastState()
 
 }
 
-void DrawToolRHI::writeOverlayText(int x, int y, unsigned fontSize, const Vec4f &color, const char* text){}
+void DrawToolRHI::writeOverlayText(int x, int y, unsigned fontSize, const RGBAColor &color, const char* text){}
 
 void DrawToolRHI::readPixels(int x, int y, int w, int h, float* rgb, float* z){}
 
