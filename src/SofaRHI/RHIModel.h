@@ -40,7 +40,7 @@ public:
     using QRhiCommandBufferPtr = std::shared_ptr<QRhiCommandBuffer>;
     using QRhiResourceUpdateBatchPtr = std::shared_ptr<QRhiResourceUpdateBatch>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
-    using LoaderMaterial = sofa::core::loader::Material;
+    using LoaderMaterial = sofa::helper::types::Material;
 
     RHIRendering(const RHIGroup& group)
         : m_rhigroup(group)
