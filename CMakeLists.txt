@@ -58,6 +58,7 @@ find_package(Qt5Gui CONFIG REQUIRED Private PATHS "${SOFA-EXTERNAL_QT5_PATH}")
 find_package(Vulkan QUIET)
 find_package(SofaBase REQUIRED)
 find_package(SofaGui REQUIRED)
+find_package(SofaGuiQt REQUIRED)
 
 if(Vulkan_FOUND)
     message(STATUS "Vulkan detected, enabling Vulkan specific code (if you compiled Qt with vulkan)." )
@@ -67,7 +68,7 @@ endif()
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES}  ${SOURCE_FILES}  ${QT_RESOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} SofaCore SofaBaseVisual SofaGuiCommon SofaGuiMain SofaGuiQt)
+target_link_libraries(${PROJECT_NAME} SofaCore SofaBaseVisual SofaGuiCommon SofaGui SofaGuiQt)
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::GuiPrivate Qt5::Widgets )
 if(Vulkan_FOUND)
     target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan )

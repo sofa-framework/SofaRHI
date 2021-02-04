@@ -1,6 +1,7 @@
 #include <SofaRHI/RHIGraphicVisitor.h>
 
 #include <SofaBaseVisual/VisualStyle.h>
+#include <sofa/simulation/Node.h>
 
 namespace sofa::rhi
 {

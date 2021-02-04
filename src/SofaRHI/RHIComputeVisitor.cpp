@@ -1,5 +1,7 @@
 #include <SofaRHI/RHIComputeVisitor.h>
 
+#include <sofa/simulation/Node.h>
+
 namespace sofa::rhi
 {
 
