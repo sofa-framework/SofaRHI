@@ -350,7 +350,7 @@ int RHIOffscreenViewer::mainLoop()
 
         sofa::helper::AdvancedTimer::begin("Animate");
         sofa::simulation::getSimulation()->animate(m_groot.get());
-        msg_info("RHIOffscreenViewer") << "Processing." << sofa::helper::AdvancedTimer::end("Animate", m_groot.get()) << msgendl;
+        msg_info("RHIOffscreenViewer") << "Processing." << sofa::helper::AdvancedTimer::end("Animate", m_groot->getTime(), m_groot->getDt()) << msgendl;
         sofa::simulation::Visitor::ctime_t rtfreq = sofa::helper::system::thread::CTime::getRefTicksPerSec();
         sofa::simulation::Visitor::ctime_t tfreq = sofa::helper::system::thread::CTime::getTicksPerSec();
         sofa::simulation::Visitor::ctime_t rt = sofa::helper::system::thread::CTime::getRefTime();
