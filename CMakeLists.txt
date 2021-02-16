@@ -74,6 +74,11 @@ if(Vulkan_FOUND)
     target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan )
 endif()
 
+find_package(Sofa.GL QUIET)
+if(Sofa.GL_FOUND)
+    message(NOTICE "Sofa.GL has been detected ; OpenGL and this Plugin are not compatible so make sure not to call any (raw) OpenGL code.")
+endif()
+
 # Workaround on the fact that SofaRHI needs to be loaded before the GUI is set-up
 # (RequiredPlugin cannot be used)
 # and this Workaround is only useful with runSofa
