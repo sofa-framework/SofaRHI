@@ -32,7 +32,7 @@ std::string RHIViewer::s_keyGgraphicsAPI = {"ogl"};
 const std::string RHIViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
 
-int RHIViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
+int RHIViewer::RegisterGUIParameters(sofa::gui::ArgumentParser* argumentParser)
 {
     const std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
     const std::string defaultStr = supportedAPIs[0];

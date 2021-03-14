@@ -9,7 +9,7 @@
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
-#include <sofa/helper/ArgumentParser.h>
+#include <sofa/gui/ArgumentParser.h>
 
 #include <SofaSimulationCommon/xml/Element.h>
 
@@ -76,7 +76,7 @@ public:
     bool load() override;
     bool unload() override;
 
-    static int RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser);
+    static int RegisterGUIParameters(sofa::gui::ArgumentParser* argumentParser);
 
 public slots:
     void resetView() override;

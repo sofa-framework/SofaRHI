@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sofa/core/visual/DrawTool.h>
+#include <sofa/helper/visual/DrawTool.h>
 
 #include <sofa/core/visual/DisplayFlags.h>
 #include <sofa/defaulttype/Mat.h>
@@ -18,9 +18,9 @@ namespace sofa::core::visual
 namespace sofa::rhi
 {
 
-class DrawToolRHI : public sofa::core::visual::DrawTool
+class DrawToolRHI : public sofa::helper::visual::DrawTool
 {
-    using Inherited = sofa::core::visual::DrawTool;
+    using Inherited = sofa::helper::visual::DrawTool;
     using DisplayFlags = sofa::core::visual::DisplayFlags;
 
     using Vec4i = sofa::defaulttype::Vec4i;

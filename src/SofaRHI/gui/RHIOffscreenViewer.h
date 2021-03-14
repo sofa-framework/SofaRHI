@@ -6,7 +6,7 @@
 #include <sofa/gui/BaseGUI.h>
 #include <sofa/gui/ViewerFactory.h>
 
-#include <sofa/helper/ArgumentParser.h>
+#include <sofa/gui/ArgumentParser.h>
 
 #include <QtGui/private/qrhi_p.h>
 
