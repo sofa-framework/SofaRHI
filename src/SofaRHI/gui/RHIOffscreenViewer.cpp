@@ -11,6 +11,7 @@
 #include <sofa/simulation/Simulation.h>
 #include <sofa/simulation/UpdateContextVisitor.h>
 #include <SofaBaseVisual/VisualStyle.h>
+#include <SofaBaseVisual/InteractiveCamera.h>
 
 #include <sofa/gui/GUIManager.h>
 
@@ -46,7 +47,7 @@ std::string RHIOffscreenViewer::s_keyGgraphicsAPI = {"ogl"};
 const std::string RHIOffscreenViewer::VIEW_FILE_EXTENSION = "rhiviewer.view";
 
 
-int RHIOffscreenViewer::RegisterGUIParameters(sofa::helper::ArgumentParser* argumentParser)
+int RHIOffscreenViewer::RegisterGUIParameters(sofa::gui::ArgumentParser* argumentParser)
 {
     const std::vector<std::string>& supportedAPIs = sofa::rhi::gui::RHIGUIUtils::GetSupportedAPIs();
     const std::string defaultStr = supportedAPIs[0];
