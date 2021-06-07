@@ -118,7 +118,6 @@ RHIOffscreenViewer::RHIOffscreenViewer()
 #ifdef Q_OS_DARWIN
     if (graphicsAPI == QRhi::Metal)
     {
-        m_window->setSurfaceType(QSurface::MetalSurface);
         QRhiMetalInitParams mtlInitParams;
         m_rhi.reset(QRhi::create(graphicsAPI, &mtlInitParams));
         msg_info("RHIViewer") << "Will use Metal";
