@@ -2,7 +2,7 @@
 
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/defaulttype/RGBAColor.h>
-#include <sofa/helper/types/Material.h>
+#include <sofa/type/Material.h>
 #include <sofa/core/ObjectFactory.h>
 
 #include <sofa/helper/system/FileRepository.h>
@@ -406,12 +406,12 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
     //TODO: Check finally if double or float has an impact on rendering
     //convert vertices to float if needed
     const void* ptrVertices = reinterpret_cast<const void*>(vertices.data());
-    helper::vector<sofa::defaulttype::Vec3f> fVertices;
+    type::vector<sofa::type::Vec3f> fVertices;
     if (std::is_same<DataTypes::Real, float>::value == false)
     {
         for (const auto& v : vertices)
         {
-            fVertices.push_back(sofa::defaulttype::Vec3f(v[0], v[1], v[2]));
+            fVertices.push_back(sofa::type::Vec3f(v[0], v[1], v[2]));
         }
         ptrVertices = reinterpret_cast<const void*>(fVertices.data());
         positionsBufferSize = int(vertices.size() * sizeof(fVertices[0]));
@@ -420,12 +420,12 @@ void RHIModel::updateVertexBuffer(QRhiResourceUpdateBatch* batch, bool updateAll
     int normalsBufferSize = int(vnormals.size() * sizeof(vnormals[0]));
     //convert normals to float if needed
     const void* ptrNormals = reinterpret_cast<const void*>(vnormals.data());
-    helper::vector<sofa::defaulttype::Vec3f> fNormals;
+    type::vector<sofa::type::Vec3f> fNormals;
     if (std::is_same<DataTypes::Real, float>::value == false)
     {
         for (const auto& n : vnormals)
         {
-            fNormals.push_back(sofa::defaulttype::Vec3f(n[0], n[1], n[2]));
+            fNormals.push_back(sofa::type::Vec3f(n[0], n[1], n[2]));
         }
         ptrNormals = reinterpret_cast<const void*>(fNormals.data());
         normalsBufferSize = int(vnormals.size() * sizeof(fNormals[0]));
@@ -505,7 +505,7 @@ void RHIModel::updateCameraUniformBuffer(QRhiResourceUpdateBatch* batch)
     }
     const auto inverseModelViewMatrix = qModelViewMatrix.inverted();
 
-    const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
+    const type::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
     const QMatrix4x4 mvpMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
     batch->updateDynamicBuffer(m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE, mvpMatrix.constData());
     batch->updateDynamicBuffer(m_cameraUniformBuffer, utils::MATRIX4_SIZE, utils::VEC3_SIZE, cameraPosition.data());
@@ -768,7 +768,7 @@ void RHIModel::updateStorageBuffer(QRhiResourceUpdateBatch* batch)
     const auto& vertices = this->getVertices();
     const auto& triangles = this->getTriangles();
 
-    std::vector<sofa::defaulttype::Vec3f> verticesFromTriangles;
+    std::vector<sofa::type::Vec3f> verticesFromTriangles;
     verticesFromTriangles.reserve(triangles.size() * 3);
     for (const auto& t : triangles)
     {

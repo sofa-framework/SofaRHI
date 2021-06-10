@@ -3,7 +3,7 @@
 #include <sofa/helper/visual/DrawTool.h>
 
 #include <sofa/core/visual/DisplayFlags.h>
-#include <sofa/defaulttype/Mat.h>
+#include <sofa/type/Mat.h>
 
 #include <array>
 #include <stack>
@@ -23,10 +23,10 @@ class DrawToolRHI : public sofa::helper::visual::DrawTool
     using Inherited = sofa::helper::visual::DrawTool;
     using DisplayFlags = sofa::core::visual::DisplayFlags;
 
-    using Vec4i = sofa::defaulttype::Vec4i;
-    using Vec2f = sofa::defaulttype::Vec2f;
-    using Matrix4f = sofa::defaulttype::Mat4x4f;
-    using Matrix4d = sofa::defaulttype::Mat4x4d;
+    using Vec4i = sofa::type::Vec4i;
+    using Vec2f = sofa::type::Vec2f;
+    using Matrix4f = sofa::type::Mat4x4f;
+    using Matrix4d = sofa::type::Mat4x4d;
 
     using QRhiPtr = std::shared_ptr<QRhi>;
     using QRhiRenderPassDescriptorPtr = std::shared_ptr<QRhiRenderPassDescriptor>;
@@ -68,8 +68,8 @@ public:
     virtual void drawPoints(const std::vector<Vector3> &points, float size, const  RGBAColor& color) override;
     virtual void drawPoints(const std::vector<Vector3> &points, float size, const std::vector<RGBAColor>& colors) override;
 
-    virtual void drawLine(const Vector3 &p1, const Vector3 &p2, const RGBAColor& color) override;
-    virtual void drawInfiniteLine(const Vector3 &point, const Vector3 &direction, const RGBAColor& color) override;
+    virtual void drawLine(const type::Vector3 &p1, const type::Vector3 &p2, const RGBAColor& color) override;
+    virtual void drawInfiniteLine(const type::Vector3 &point, const type::Vector3 &direction, const RGBAColor& color) override;
     virtual void drawLines(const std::vector<Vector3> &points, float size, const RGBAColor& color) override;
     virtual void drawLines(const std::vector<Vector3> &points, float size, const std::vector<RGBAColor>& colorss) override;
     virtual void drawLines(const std::vector<Vector3> &points, const std::vector< Vec2i > &index, float size, const RGBAColor& color) override;
@@ -81,7 +81,7 @@ public:
     virtual void drawCircle(float radius, float lineThickness, int resolution, const RGBAColor& color) override;
 
     virtual void drawTriangles(const std::vector<Vector3> &points, const RGBAColor& color) override;
-    virtual void drawTriangles(const std::vector<Vector3> &points, const Vector3& normal, const RGBAColor& color) override;
+    virtual void drawTriangles(const std::vector<Vector3> &points, const type::Vector3& normal, const RGBAColor& color) override;
     virtual void drawTriangles(const std::vector<Vector3> &points,
         const std::vector< Vec3i > &index,
         const std::vector<Vector3>  &normal,
@@ -102,79 +102,79 @@ public:
         const std::vector<Vector3>  &normal,
         const RGBAColor& color) override;
 
-    virtual void drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size) override;
-    virtual void drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size, const RGBAColor &colors) override;
+    virtual void drawFrame(const type::Vector3& position, const Quaternion &orientation, const Vec3f &size) override;
+    virtual void drawFrame(const type::Vector3& position, const Quaternion &orientation, const Vec3f &size, const RGBAColor &colors) override;
 
     virtual void drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const RGBAColor& color) override;
     virtual void drawSpheres(const std::vector<Vector3> &points, float radius, const RGBAColor& color) override;
     virtual void drawFakeSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const RGBAColor& color) override;
     virtual void drawFakeSpheres(const std::vector<Vector3> &points, float radius, const RGBAColor& color) override;
 
-    virtual void drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const RGBAColor& color, int subd = 16) override;
+    virtual void drawCone(const type::Vector3& p1, const type::Vector3 &p2, float radius1, float radius2, const RGBAColor& color, int subd = 16) override;
 
     /// Draw a cube of size one centered on the current point.
     virtual void drawCube(const float& radius, const RGBAColor& color, const int& subd = 16) override;
 
-    virtual void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
+    virtual void drawCylinder(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
 
-    virtual void drawCapsule(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
+    virtual void drawCapsule(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
 
-    virtual void drawArrow(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
-    virtual void drawArrow(const Vector3& p1, const Vector3 &p2, float radius, float coneLength, const RGBAColor& color, int subd = 16) override;
-    virtual void drawArrow(const Vector3& p1, const Vector3& p2, float radius, float coneLength, float coneRadius, const RGBAColor& color, int subd = 16) override;
+    virtual void drawArrow(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd = 16) override;
+    virtual void drawArrow(const type::Vector3& p1, const type::Vector3 &p2, float radius, float coneLength, const RGBAColor& color, int subd = 16) override;
+    virtual void drawArrow(const type::Vector3& p1, const type::Vector3& p2, float radius, float coneLength, float coneRadius, const RGBAColor& color, int subd = 16) override;
 
     /// Draw a cross (3 lines) centered on p
-    virtual void drawCross(const Vector3&p, float length, const RGBAColor& color) override;
+    virtual void drawCross(const type::Vector3&p, float length, const RGBAColor& color) override;
 
     /// Draw a plus sign of size one centered on the current point.
     virtual void drawPlus(const float& radius, const RGBAColor& color, const int& subd = 16) override;
 
-    virtual void drawPoint(const Vector3 &p, const RGBAColor &c) override;
-    virtual void drawPoint(const Vector3 &p, const Vector3 &n, const RGBAColor &c) override;
+    virtual void drawPoint(const type::Vector3 &p, const RGBAColor &c) override;
+    virtual void drawPoint(const type::Vector3 &p, const type::Vector3 &n, const RGBAColor &c) override;
 
-    virtual void drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-        const Vector3 &normal) override;
-    virtual void drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-        const Vector3 &normal, const RGBAColor &c) override;
-    virtual void drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-        const Vector3 &normal,
+    virtual void drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+        const type::Vector3 &normal) override;
+    virtual void drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+        const type::Vector3 &normal, const RGBAColor &c) override;
+    virtual void drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+        const type::Vector3 &normal,
         const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3) override;
-    virtual void drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-        const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3,
+    virtual void drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+        const type::Vector3 &normal1, const type::Vector3 &normal2, const type::Vector3 &normal3,
         const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3) override;
 
-    virtual void drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-        const Vector3 &normal) override;
-    virtual void drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-        const Vector3 &normal, const RGBAColor &c) override;
-    virtual void drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-        const Vector3 &normal,
+    virtual void drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+        const type::Vector3 &normal) override;
+    virtual void drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+        const type::Vector3 &normal, const RGBAColor &c) override;
+    virtual void drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+        const type::Vector3 &normal,
         const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4) override;
-    virtual void drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-        const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3, const Vector3 &normal4,
+    virtual void drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+        const type::Vector3 &normal1, const type::Vector3 &normal2, const type::Vector3 &normal3, const type::Vector3 &normal4,
         const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4) override;
     virtual void drawQuads(const std::vector<Vector3> &points, const RGBAColor& color) override;
     virtual void drawQuads(const std::vector<Vector3> &points, const std::vector<RGBAColor>& colorss) override;
 
-    virtual void drawTetrahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const RGBAColor &colors) override;
+    virtual void drawTetrahedron(const type::Vector3 &p0, const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const RGBAColor &colors) override;
     virtual void drawTetrahedra(const std::vector<Vector3> &points, const RGBAColor& color) override;
     //Scale each tetrahedron
     virtual void drawScaledTetrahedra(const std::vector<Vector3> &points, const RGBAColor& color, const float scale) override;
 
-    virtual void drawHexahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-        const Vector3 &p4, const Vector3 &p5, const Vector3 &p6, const Vector3 &p7, const RGBAColor &colors) override;
+    virtual void drawHexahedron(const type::Vector3 &p0, const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+        const type::Vector3 &p4, const type::Vector3 &p5, const type::Vector3 &p6, const type::Vector3 &p7, const RGBAColor &colors) override;
     virtual void drawHexahedra(const std::vector<Vector3> &points, const RGBAColor& color) override;
     //Scale each hexahedron
     virtual void drawScaledHexahedra(const std::vector<Vector3> &points, const RGBAColor& color, const float scale) override;
 
-    virtual void drawSphere(const Vector3 &p, float radius) override;
-    virtual void drawSphere(const Vector3 &p, float radius, const RGBAColor& colour) override;
+    virtual void drawSphere(const type::Vector3 &p, float radius) override;
+    virtual void drawSphere(const type::Vector3 &p, float radius, const RGBAColor& colour) override;
 
-    virtual void drawEllipsoid(const Vector3 &p, const Vector3 &radii) override;
+    virtual void drawEllipsoid(const type::Vector3 &p, const type::Vector3 &radii) override;
 
-    virtual void drawBoundingBox(const Vector3 &min, const Vector3 &max, float size = 1.0) override;
+    virtual void drawBoundingBox(const type::Vector3 &min, const type::Vector3 &max, float size = 1.0) override;
 
-    virtual void draw3DText(const Vector3 &p, float scale, const RGBAColor &color, const char* text) override;
+    virtual void draw3DText(const type::Vector3 &p, float scale, const RGBAColor &color, const char* text) override;
     virtual void draw3DText_Indices(const std::vector<Vector3> &positions, float scale, const RGBAColor &color) override;
     /// @}
 
@@ -260,7 +260,7 @@ public:
 
 private:
 
-    //static Vector3 computeNormal(const Vector3& a, const Vector3& b, const Vector3& c);
+    //static type::Vector3 computeNormal(const type::Vector3& a, const type::Vector3& b, const type::Vector3& c);
 
     /// Hidden general drawing methods
     using Vector3f = std::array<float, 3>;

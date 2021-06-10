@@ -7,8 +7,8 @@
 #include <sofa/gui/qt/viewer/SofaViewer.h>
 #include <sofa/gui/ViewerFactory.h>
 
-#include <sofa/defaulttype/Vec.h>
-#include <sofa/defaulttype/Quat.h>
+#include <sofa/type/Vec.h>
+#include <sofa/type/Quat.h>
 #include <sofa/gui/ArgumentParser.h>
 
 #include <SofaSimulationCommon/xml/Element.h>
@@ -86,8 +86,8 @@ public slots:
     virtual int getWidth() override;
     virtual int getHeight() override;
 
-    virtual void getView(defaulttype::Vector3& pos, defaulttype::Quat& ori) const override;
-    virtual void setView(const defaulttype::Vector3& pos, const defaulttype::Quat &ori) override ;
+    virtual void getView(type::Vector3& pos, type::Quat<SReal>& ori) const override;
+    virtual void setView(const type::Vector3& pos, const type::Quat<SReal> &ori) override ;
     virtual void newView() override ;
     virtual void captureEvent()  override { SofaViewer::captureEvent(); }
     virtual void drawColourPicking (sofa::gui::ColourPickingVisitor::ColourCode code) override ;

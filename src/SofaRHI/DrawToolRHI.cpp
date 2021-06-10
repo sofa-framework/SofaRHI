@@ -277,7 +277,7 @@ void DrawToolRHI::beginFrame(core::visual::VisualParams* vparams, QRhiResourceUp
     }
     const auto inverseModelViewMatrix = qModelViewMatrix.inverted();
 
-    const defaulttype::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
+    const type::Vec3f cameraPosition{ inverseModelViewMatrix.data()[3], inverseModelViewMatrix.data()[7], inverseModelViewMatrix.data()[11] }; // or 12 13 14 if transposed
     const QMatrix4x4 mvpMatrix = m_correctionMatrix.transposed() * qProjectionMatrix.transposed() * qModelViewMatrix.transposed();
     m_currentRUB->updateDynamicBuffer(m_cameraUniformBuffer, 0, utils::MATRIX4_SIZE, mvpMatrix.constData());
     m_currentRUB->updateDynamicBuffer(m_cameraUniformBuffer, utils::MATRIX4_SIZE, utils::VEC3_SIZE, cameraPosition.data());
@@ -557,7 +557,7 @@ void DrawToolRHI::drawPoints(const std::vector<Vector3> &points, float size, con
     internalDrawPoints(points, size, colors);
 }
 
-void DrawToolRHI::drawLine(const Vector3 &p1, const Vector3 &p2, const RGBAColor& color)
+void DrawToolRHI::drawLine(const type::Vector3 &p1, const type::Vector3 &p2, const RGBAColor& color)
 {
     std::vector<Vector3> positions;
     positions.push_back(p1);
@@ -598,7 +598,7 @@ void DrawToolRHI::drawLines(const std::vector<Vector3> &points, const std::vecto
 
     internalDrawLines(points, index, size, colors);
 }
-void DrawToolRHI::drawInfiniteLine(const Vector3 &point, const Vector3 &direction, const RGBAColor& color){}
+void DrawToolRHI::drawInfiniteLine(const type::Vector3 &point, const type::Vector3 &direction, const RGBAColor& color){}
 void DrawToolRHI::drawLineStrip(const std::vector<Vector3> &points, float size, const RGBAColor& color){}
 void DrawToolRHI::drawLineLoop(const std::vector<Vector3> &points, float size, const RGBAColor& color){}
 void DrawToolRHI::drawDisk(float radius, double from, double to, int resolution, const RGBAColor& color){}
@@ -624,7 +624,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const RGBACo
     drawTriangles(points, colors);
 }
 
-void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const Vector3& normal, const RGBAColor& color)
+void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points, const type::Vector3& normal, const RGBAColor& color)
 {
     std::vector<RGBAColor> colors;
     std::vector<Vector3> normals;
@@ -648,10 +648,10 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
     indices.reserve(nbTriangles);
     for (std::size_t i=0; i<nbTriangles; ++i)
     {
-        const Vector3& a = points[ 3*i+0 ];
-        const Vector3& b = points[ 3*i+1 ];
-        const Vector3& c = points[ 3*i+2 ];
-        Vector3 n = utils::computeNormal(a,b,c);
+        const type::Vector3& a = points[ 3*i+0 ];
+        const type::Vector3& b = points[ 3*i+1 ];
+        const type::Vector3& c = points[ 3*i+2 ];
+        type::Vector3 n = utils::computeNormal(a,b,c);
 
         normals[ 3*i+0 ]= n;
         normals[ 3*i+1 ]= n;
@@ -693,7 +693,7 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
     {
         std::vector<Vector3> normals;
         normals.reserve(points.size());
-        for(const Vector3& n : normal)
+        for(const type::Vector3& n : normal)
         {
             for(int j=0 ; j<3 ;j++)
             {
@@ -715,10 +715,10 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 
         for (std::size_t i=0; i<nbTriangles; ++i)
         {
-            const Vector3& a = points[ 3*i+0 ];
-            const Vector3& b = points[ 3*i+1 ];
-            const Vector3& c = points[ 3*i+2 ];
-            Vector3 n = utils::computeNormal(a,b,c);
+            const type::Vector3& a = points[ 3*i+0 ];
+            const type::Vector3& b = points[ 3*i+1 ];
+            const type::Vector3& c = points[ 3*i+2 ];
+            type::Vector3 n = utils::computeNormal(a,b,c);
 
             normals[ 3*i+0 ]= n;
             normals[ 3*i+1 ]= n;
@@ -730,27 +730,27 @@ void DrawToolRHI::drawTriangles(const std::vector<Vector3> &points,
 
 }
 ///FIXME: remove single primitive drawing ?
-void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &normal)
+void DrawToolRHI::drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+    const type::Vector3 &normal)
 {
     drawTriangle(p1, p2, p3, normal, RGBAColor(1.0f, 1.0f,1.0f,1.0f)); // with a dummy
 }
 
-void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &normal, const RGBAColor &c)
+void DrawToolRHI::drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+    const type::Vector3 &normal, const RGBAColor &c)
 {
     drawTriangle(p1, p2, p3, normal, normal, normal, c, c, c);
 }
 
-void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &normal,
+void DrawToolRHI::drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+    const type::Vector3 &normal,
     const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3)
 {
     drawTriangle(p1, p2, p3, normal, normal, normal, c1, c2, c3);
 }
 
-void DrawToolRHI::drawTriangle(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3,
+void DrawToolRHI::drawTriangle(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+    const type::Vector3 &normal1, const type::Vector3 &normal2, const type::Vector3 &normal3,
     const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3)
 {
     std::vector<Vector3> points;
@@ -788,8 +788,8 @@ void DrawToolRHI::drawTriangleFan(const std::vector<Vector3> &points,
 {
 }
 
-void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size){}
-void DrawToolRHI::drawFrame(const Vector3& position, const Quaternion &orientation, const Vec3f &size, const RGBAColor &colour){}
+void DrawToolRHI::drawFrame(const type::Vector3& position, const Quaternion &orientation, const Vec3f &size){}
+void DrawToolRHI::drawFrame(const type::Vector3& position, const Quaternion &orientation, const Vec3f &size, const RGBAColor &colour){}
 
 void DrawToolRHI::drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const RGBAColor& color)
 {
@@ -832,12 +832,12 @@ void DrawToolRHI::drawFakeSpheres(const std::vector<Vector3> &points, float radi
     drawSpheres(points, radius, color);
 }
 
-void DrawToolRHI::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawCone(const type::Vector3& p1, const type::Vector3 &p2, float radius1, float radius2, const RGBAColor& color, int subd){}
 
 /// Draw a cube of size one centered on the current point.
 void DrawToolRHI::drawCube(const float& radius, const RGBAColor& color, const int& subd){}
 
-void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd)
+void DrawToolRHI::drawCylinder(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd)
 {
     std::vector<Vector3> meshVertices;
     std::vector<Vector3> meshNormals;
@@ -855,10 +855,10 @@ void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radiu
     //rotate and translate cylinder
     //extremely not optimized
     //find rotation, creating frame
-    Vector3 zAxis = direction.normalized();
-    Vector3 yAxis(0.0, 1.0, 0.0);
+    type::Vector3 zAxis = direction.normalized();
+    type::Vector3 yAxis(0.0, 1.0, 0.0);
 
-    Vector3 xAxis = yAxis.cross(zAxis);
+    type::Vector3 xAxis = yAxis.cross(zAxis);
     xAxis.normalize();
 
     if (xAxis.norm2() < std::numeric_limits<SReal>::epsilon() * 10)
@@ -867,7 +867,7 @@ void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radiu
 
     yAxis = zAxis.cross(xAxis);
 
-    auto rotation = helper::Quater<SReal>::createQuaterFromFrame(xAxis, yAxis, zAxis);
+    auto rotation = type::Quat<SReal>::createQuaterFromFrame(xAxis, yAxis, zAxis);
     rotation.normalize();
     auto transformation = Matrix4d::transformTranslation(direction * 0.5) *  Matrix4d::transformRotation(rotation) ;
     
@@ -886,31 +886,31 @@ void DrawToolRHI::drawCylinder(const Vector3& p1, const Vector3 &p2, float radiu
     internalDrawTriangles(meshVertices, meshTriangles, meshNormals, meshColors);
 }
 
-void DrawToolRHI::drawCapsule(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawCapsule(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd){}
 
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, const RGBAColor& color, int subd){}
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3 &p2, float radius, float coneLength, const RGBAColor& color, int subd){}
-void DrawToolRHI::drawArrow(const Vector3& p1, const Vector3& p2, float radius, float coneLength, float coneRadius, const RGBAColor& color, int subd) {}
+void DrawToolRHI::drawArrow(const type::Vector3& p1, const type::Vector3 &p2, float radius, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawArrow(const type::Vector3& p1, const type::Vector3 &p2, float radius, float coneLength, const RGBAColor& color, int subd){}
+void DrawToolRHI::drawArrow(const type::Vector3& p1, const type::Vector3& p2, float radius, float coneLength, float coneRadius, const RGBAColor& color, int subd) {}
 
 /// Draw a cross (3 lines) centered on p
-void DrawToolRHI::drawCross(const Vector3&p, float length, const RGBAColor& color){}
+void DrawToolRHI::drawCross(const type::Vector3&p, float length, const RGBAColor& color){}
 
 /// Draw a plus sign of size one centered on the current point.
 void DrawToolRHI::drawPlus(const float& radius, const RGBAColor& color, const int& subd ){}
 
-void DrawToolRHI::drawPoint(const Vector3 &p, const RGBAColor &c){}
-void DrawToolRHI::drawPoint(const Vector3 &p, const Vector3 &n, const RGBAColor &c){}
+void DrawToolRHI::drawPoint(const type::Vector3 &p, const RGBAColor &c){}
+void DrawToolRHI::drawPoint(const type::Vector3 &p, const type::Vector3 &n, const RGBAColor &c){}
 
 /// Quads methods
-void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-    const Vector3 &normal){}
-void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-    const Vector3 &normal, const RGBAColor &c){}
-void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-    const Vector3 &normal,
+void DrawToolRHI::drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+    const type::Vector3 &normal){}
+void DrawToolRHI::drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+    const type::Vector3 &normal, const RGBAColor &c){}
+void DrawToolRHI::drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+    const type::Vector3 &normal,
     const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4){}
-void DrawToolRHI::drawQuad(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const Vector3 &p4,
-    const Vector3 &normal1, const Vector3 &normal2, const Vector3 &normal3, const Vector3 &normal4,
+void DrawToolRHI::drawQuad(const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const type::Vector3 &p4,
+    const type::Vector3 &normal1, const type::Vector3 &normal2, const type::Vector3 &normal3, const type::Vector3 &normal4,
     const RGBAColor &c1, const RGBAColor &c2, const RGBAColor &c3, const RGBAColor &c4){}
 void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const RGBAColor& color)
 {
@@ -940,9 +940,9 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
         indices.push_back( { p0, p1, p2 } );
         indices.push_back( { p2, p3, p0 } );
 
-        Vector3 n0 = utils::computeNormal(points[p0], points[p1], points[p2]);
-        Vector3 n1 = utils::computeNormal(points[p2], points[p3], points[p0]);
-        Vector3 qn = (n0 + n1) * 0.5;
+        type::Vector3 n0 = utils::computeNormal(points[p0], points[p1], points[p2]);
+        type::Vector3 n1 = utils::computeNormal(points[p2], points[p3], points[p0]);
+        type::Vector3 qn = (n0 + n1) * 0.5;
         qn.normalize();
 
         normals.push_back ( qn );
@@ -956,7 +956,7 @@ void DrawToolRHI::drawQuads(const std::vector<Vector3> &points, const std::vecto
 }
 
 /// Tetrahedra methods
-void DrawToolRHI::drawTetrahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, const RGBAColor &colour){}
+void DrawToolRHI::drawTetrahedron(const type::Vector3 &p0, const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3, const RGBAColor &colour){}
 void DrawToolRHI::drawTetrahedra(const std::vector<Vector3> &points, const RGBAColor& color)
 {
     drawScaledTetrahedra(points, color, 1.0f);
@@ -976,12 +976,12 @@ void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const
         const int p2 = i + 2;
         const int p3 = i + 3;
 
-        Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3]) * 0.25f;
+        type::Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3]) * 0.25f;
 
-        Vector3 npoint0 = ((points[p0] - center) * scale) + center;
-        Vector3 npoint1 = ((points[p1] - center) * scale) + center;
-        Vector3 npoint2 = ((points[p2] - center) * scale) + center;
-        Vector3 npoint3 = ((points[p3] - center) * scale) + center;
+        type::Vector3 npoint0 = ((points[p0] - center) * scale) + center;
+        type::Vector3 npoint1 = ((points[p1] - center) * scale) + center;
+        type::Vector3 npoint2 = ((points[p2] - center) * scale) + center;
+        type::Vector3 npoint3 = ((points[p3] - center) * scale) + center;
 
         newpoints.push_back(npoint0); newpoints.push_back(npoint1); newpoints.push_back(npoint2);
         newpoints.push_back(npoint1); newpoints.push_back(npoint2); newpoints.push_back(npoint3);
@@ -994,8 +994,8 @@ void DrawToolRHI::drawScaledTetrahedra(const std::vector<Vector3> &points, const
 
 /// Hexahedra methods
 
-void DrawToolRHI::drawHexahedron(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
-    const Vector3 &p4, const Vector3 &p5, const Vector3 &p6, const Vector3 &p7, const RGBAColor &colour){}
+void DrawToolRHI::drawHexahedron(const type::Vector3 &p0, const type::Vector3 &p1, const type::Vector3 &p2, const type::Vector3 &p3,
+    const type::Vector3 &p4, const type::Vector3 &p5, const type::Vector3 &p6, const type::Vector3 &p7, const RGBAColor &colour){}
 
 void DrawToolRHI::drawHexahedra(const std::vector<Vector3> &points, const RGBAColor& color)
 {
@@ -1030,16 +1030,16 @@ void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const 
         const int p6 = i + 6;
         const int p7 = i + 7;
 
-        Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3] + points[p4] + points[p5] + points[p6] + points[p7]) * 0.125f;
+        type::Vector3 center = (points[p0] + points[p1] + points[p2] + points[p3] + points[p4] + points[p5] + points[p6] + points[p7]) * 0.125f;
 
-        Vector3 npoint0 = ((points[p0] - center) * scale) + center;
-        Vector3 npoint1 = ((points[p1] - center) * scale) + center;
-        Vector3 npoint2 = ((points[p2] - center) * scale) + center;
-        Vector3 npoint3 = ((points[p3] - center) * scale) + center;
-        Vector3 npoint4 = ((points[p4] - center) * scale) + center;
-        Vector3 npoint5 = ((points[p5] - center) * scale) + center;
-        Vector3 npoint6 = ((points[p6] - center) * scale) + center;
-        Vector3 npoint7 = ((points[p7] - center) * scale) + center;
+        type::Vector3 npoint0 = ((points[p0] - center) * scale) + center;
+        type::Vector3 npoint1 = ((points[p1] - center) * scale) + center;
+        type::Vector3 npoint2 = ((points[p2] - center) * scale) + center;
+        type::Vector3 npoint3 = ((points[p3] - center) * scale) + center;
+        type::Vector3 npoint4 = ((points[p4] - center) * scale) + center;
+        type::Vector3 npoint5 = ((points[p5] - center) * scale) + center;
+        type::Vector3 npoint6 = ((points[p6] - center) * scale) + center;
+        type::Vector3 npoint7 = ((points[p7] - center) * scale) + center;
 
         newpoints.push_back(npoint0); newpoints.push_back(npoint1); newpoints.push_back(npoint2); newpoints.push_back(npoint3);
         newpoints.push_back(npoint4); newpoints.push_back(npoint7); newpoints.push_back(npoint6); newpoints.push_back(npoint5);
@@ -1052,12 +1052,12 @@ void DrawToolRHI::drawScaledHexahedra(const std::vector<Vector3> &points, const 
     drawQuads(newpoints, color);
 }
 
-void DrawToolRHI::drawSphere(const Vector3 &p, float radius){}
-void DrawToolRHI::drawSphere(const Vector3 &p, float radius, const RGBAColor& colour) {}
+void DrawToolRHI::drawSphere(const type::Vector3 &p, float radius){}
+void DrawToolRHI::drawSphere(const type::Vector3 &p, float radius, const RGBAColor& colour) {}
 
-void DrawToolRHI::drawEllipsoid(const Vector3 &p, const Vector3 &radii){}
+void DrawToolRHI::drawEllipsoid(const type::Vector3 &p, const type::Vector3 &radii){}
 
-void DrawToolRHI::drawBoundingBox(const Vector3 &min, const Vector3 &max, float size)
+void DrawToolRHI::drawBoundingBox(const type::Vector3 &min, const type::Vector3 &max, float size)
 {
     std::vector<Vector3> points;
     std::vector<Vec2i> indices;
@@ -1098,7 +1098,7 @@ void DrawToolRHI::drawBoundingBox(const Vector3 &min, const Vector3 &max, float 
 
 }
 
-void DrawToolRHI::draw3DText(const Vector3 &p, float scale, const RGBAColor &color, const char* text)
+void DrawToolRHI::draw3DText(const type::Vector3 &p, float scale, const RGBAColor &color, const char* text)
 {
     
 }

@@ -22,8 +22,8 @@ namespace sofa::rhi::gui
 {
 
 using sofa::simulation::getSimulation;
-using sofa::defaulttype::Vector3;
-using sofa::defaulttype::Quat;
+using sofa::type::Vector3;
+using sofa::type::Quat;
 
 
 std::string RHIViewer::s_keyGgraphicsAPI = {"ogl"};
@@ -233,8 +233,8 @@ void RHIViewer::setupDefaultLight()
 void RHIViewer::setupBoundingBox()
 {
     const sofa::defaulttype::BoundingBox& bbox = groot->f_bbox.getValue();
-    const Vector3& minBBox = bbox.minBBox();
-    const Vector3& maxBBox = bbox.maxBBox();
+    const type::Vector3& minBBox = bbox.minBBox();
+    const type::Vector3& maxBBox = bbox.maxBBox();
 
     //if(m_bboxTransform == nullptr)
     //{
@@ -295,8 +295,8 @@ void RHIViewer::setupBoundingBox()
     //{
     //    m_bboxEntity->setEnabled(true);
 
-    //    const Vector3 sizeBBox = maxBBox - minBBox;
-    //    const Vector3 halfSizeBBox = sizeBBox*0.5;
+    //    const type::Vector3 sizeBBox = maxBBox - minBBox;
+    //    const type::Vector3 halfSizeBBox = sizeBBox*0.5;
     //    QVector3D center {
     //        float(halfSizeBBox[0] + minBBox[0]),
     //        float(halfSizeBBox[1] + minBBox[1]),
@@ -361,8 +361,8 @@ void RHIViewer::setupBoundingBox()
 void RHIViewer::setupFrameAxis()
 {
     const sofa::defaulttype::BoundingBox& bbox = groot->f_bbox.getValue();
-    const Vector3& minBBox = bbox.minBBox();
-    const Vector3& maxBBox = bbox.maxBBox();
+    const type::Vector3& minBBox = bbox.minBBox();
+    const type::Vector3& maxBBox = bbox.maxBBox();
 
     //if(m_frameAxisEntity == nullptr)
     //{
@@ -441,7 +441,7 @@ void RHIViewer::setupFrameAxis()
     //{
     //    m_frameAxisEntity->setEnabled(true);
 
-    //    const Vector3 sizeBBox = maxBBox - minBBox;
+    //    const type::Vector3 sizeBBox = maxBBox - minBBox;
     //    float maxSize = std::max(sizeBBox[0],std::max(sizeBBox[1],sizeBBox[2]));
     //    QVector3D scaleAxis {
     //        1.0f,
@@ -625,8 +625,8 @@ void RHIViewer::moveRayPickInteractor(int eventX, int eventY)
     //farPos = farPos.unproject(m_defaultCamera->viewMatrix(), m_defaultCamera->projectionMatrix(), viewport);
     //QVector3D qDir = (farPos - nearPos).normalized();
 
-    //sofa::defaulttype::Vec3d position{nearPos.x(), nearPos.y(), nearPos.z()};
-    //sofa::defaulttype::Vec3d direction{qDir.x(), qDir.y(), qDir.z()};
+    //sofa::type::Vec3d position{nearPos.x(), nearPos.y(), nearPos.z()};
+    //sofa::type::Vec3d direction{qDir.x(), qDir.y(), qDir.z()};
 
     //pick->updateRay(position, direction);
 
@@ -659,12 +659,12 @@ void RHIViewer::newView()
     SofaViewer::newView();
 }
 
-void RHIViewer::getView(Vector3& pos, Quat& ori) const
+void RHIViewer::getView(type::Vector3& pos, Quat<SReal>& ori) const
 {
     SofaViewer::getView(pos, ori);
 }
 
-void RHIViewer::setView(const Vector3& pos, const Quat &ori)
+void RHIViewer::setView(const type::Vector3& pos, const Quat<SReal>&ori)
 {
     SofaViewer::setView(pos, ori);
 }
@@ -894,9 +894,9 @@ void RHIViewer::drawScene()
 
         double halfLength = (bbox.maxBBox() - bbox.minBBox()).norm2() * 0.001 * 0.5;
         double thickness = (bbox.maxBBox() - bbox.minBBox()).norm2() * 0.0001;
-        m_drawTool->drawCylinder({ 0, 0.0, 0.0 }, { halfLength * 1.5, 0.0, 0.0 }, thickness, helper::types::RGBAColor::red());
-        m_drawTool->drawCylinder({ 0.0, 0, 0.0 }, { 0.0, halfLength * 1.5, 0.0 }, thickness, helper::types::RGBAColor::green());
-        m_drawTool->drawCylinder({ 0.0, 0.0, 0 }, { 0.0, 0.0, halfLength * 1.5 }, thickness, helper::types::RGBAColor::blue());
+        m_drawTool->drawCylinder({ 0, 0.0, 0.0 }, { halfLength * 1.5, 0.0, 0.0 }, thickness, type::RGBAColor::red());
+        m_drawTool->drawCylinder({ 0.0, 0, 0.0 }, { 0.0, halfLength * 1.5, 0.0 }, thickness, type::RGBAColor::green());
+        m_drawTool->drawCylinder({ 0.0, 0.0, 0 }, { 0.0, 0.0, halfLength * 1.5 }, thickness, type::RGBAColor::blue());
 
     }
     
