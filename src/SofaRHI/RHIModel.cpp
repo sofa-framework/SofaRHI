@@ -1,7 +1,7 @@
 #include <SofaRHI/RHIModel.h>
 
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/type/RGBAColor.h>
 #include <sofa/type/Material.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -12,7 +12,7 @@
 namespace sofa::rhi
 {
 
-using sofa::defaulttype::RGBAColor;
+using sofa::type::RGBAColor;
 using namespace sofa;
 using namespace sofa::component::visualmodel;
 

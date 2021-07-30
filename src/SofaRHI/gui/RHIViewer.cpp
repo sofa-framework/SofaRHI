@@ -232,7 +232,7 @@ void RHIViewer::setupDefaultLight()
 
 void RHIViewer::setupBoundingBox()
 {
-    const sofa::defaulttype::BoundingBox& bbox = groot->f_bbox.getValue();
+    const sofa::type::BoundingBox& bbox = groot->f_bbox.getValue();
     const type::Vector3& minBBox = bbox.minBBox();
     const type::Vector3& maxBBox = bbox.maxBBox();
 
@@ -360,7 +360,7 @@ void RHIViewer::setupBoundingBox()
 
 void RHIViewer::setupFrameAxis()
 {
-    const sofa::defaulttype::BoundingBox& bbox = groot->f_bbox.getValue();
+    const sofa::type::BoundingBox& bbox = groot->f_bbox.getValue();
     const type::Vector3& minBBox = bbox.minBBox();
     const type::Vector3& maxBBox = bbox.maxBBox();
 
