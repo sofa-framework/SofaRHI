@@ -6,7 +6,7 @@
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/FileSystem.h>
 #include <sofa/helper/system/PluginManager.h>
-#include <sofa/helper/AdvancedTimer.h>
+#include <sofa/helper/ScopedAdvancedTimer.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/Simulation.h>
 #include <sofa/simulation/UpdateContextVisitor.h>
@@ -18,6 +18,8 @@
 #include <QApplication>
 #include <QFileInfo>
 #include <QOffscreenSurface>
+
+#include <cxxopts.hpp>
 
 namespace sofa::rhi::gui
 {
@@ -59,22 +61,22 @@ int RHIOffscreenViewer::RegisterGUIParameters(sofa::gui::ArgumentParser* argumen
         displayChoice << supportedAPI << " | ";
     }
     argumentParser->addArgument(
-        boost::program_options::value<std::string>(&s_keyGgraphicsAPI)
-        ->default_value(defaultStr)
-        ->notifier([supportedAPIs, defaultStr](const std::string value) {
+        cxxopts::value<std::string>(s_keyGgraphicsAPI)
+        ->default_value(defaultStr),
+        "api", displayChoice.str(),
+        ([supportedAPIs, defaultStr](const sofa::gui::ArgumentParser*, const std::string& value) {
             if (std::find(supportedAPIs.begin(), supportedAPIs.end(), value) != supportedAPIs.end())
             {
                 msg_error("RHIOffscreenViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
             }
-        }),
-        "api", displayChoice.str()
+        })
     );
 
     argumentParser->addArgument(
-        boost::program_options::value<std::string>()
-        ->notifier(setNumIterations),
+        cxxopts::value<std::string>(),
         "nbIter,n",
-        "(only batch) Number of iterations of the simulation"
+        "(only batch) Number of iterations of the simulation",
+        &setNumIterations
     );
 
     return 0;
@@ -487,7 +489,7 @@ sofa::gui::BaseGUI* RHIOffscreenViewer::CreateGUI(const char* name, sofa::simula
     return s_gui;
 }
 
-void RHIOffscreenViewer::setNumIterations(const std::string& nbIterInp)
+void RHIOffscreenViewer::setNumIterations(const sofa::gui::ArgumentParser* , const std::string& nbIterInp)
 {
     size_t inpLen = nbIterInp.length();
 
@@ -505,6 +507,7 @@ void RHIOffscreenViewer::setNumIterations(const std::string& nbIterInp)
     }
 
 }
+
 
 int RHIOffscreenGUIClass = sofa::gui::GUIManager::RegisterGUI("rhi_offscreen", &RHIOffscreenViewer::CreateGUI, &RHIOffscreenViewer::RegisterGUIParameters, 4);
 

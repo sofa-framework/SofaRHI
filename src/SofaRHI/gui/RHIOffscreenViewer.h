@@ -38,7 +38,7 @@ public:
 
     static BaseGUI* CreateGUI(const char* name, sofa::simulation::Node::SPtr groot = nullptr, const char* filename = nullptr);
     static int RegisterGUIParameters(sofa::gui::ArgumentParser* argumentParser);
-    static void setNumIterations(const std::string& nbIterInp);
+    static void setNumIterations(const sofa::gui::ArgumentParser*, const std::string& nbIterInp);
 private:
     ~RHIOffscreenViewer() override { }
 

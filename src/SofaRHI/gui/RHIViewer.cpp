@@ -18,6 +18,8 @@
 
 #include <QSurfaceFormat>
 
+#include <cxxopts.hpp>
+
 namespace sofa::rhi::gui
 {
 
@@ -44,15 +46,15 @@ int RHIViewer::RegisterGUIParameters(sofa::gui::ArgumentParser* argumentParser)
         displayChoice << supportedAPI << " | ";
     }
     argumentParser->addArgument(
-        boost::program_options::value<std::string>(&s_keyGgraphicsAPI)
-        ->default_value(defaultStr)
-        ->notifier([supportedAPIs, defaultStr](const std::string value) {
-            if (std::find(supportedAPIs.cbegin(), supportedAPIs.cend(), value) != supportedAPIs.end())
+        cxxopts::value<std::string>(s_keyGgraphicsAPI)
+        ->default_value(defaultStr),
+        "api", displayChoice.str(),
+        ([supportedAPIs, defaultStr](const sofa::gui::ArgumentParser*, const std::string& value) {
+            if (std::find(supportedAPIs.begin(), supportedAPIs.end(), value) != supportedAPIs.end())
             {
-                msg_error("RHIViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
+                msg_error("RHIOffscreenViewer") << "Unsupported graphics API " << value << ", falling back to " << defaultStr << " .";
             }
-        }),
-        "api", displayChoice.str()
+            })
     );
 
     return 0;
